@@ -1,0 +1,117 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useHistoryStore } from '../../stores/historyStore';
+import { useConfigStore } from '../../stores/configStore';
+import { findSelectable, findTextContent } from './helpers';
+
+export default function useSelection(containerRef, overrides, setOverrides, renderKey, setRenderKey) {
+  const [hovered, setHovered] = useState('');
+  const [selected, setSelected] = useState('');
+  const setDocTitle = useConfigStore((s) => s.setDocTitle);
+
+  const saveSnapshot = useHistoryStore((s) => s.snapshot);
+  const undoHist = useHistoryStore((s) => s.undo);
+  const redoHist = useHistoryStore((s) => s.redo);
+
+  const applyUndo = useCallback(() => {
+    const s = undoHist();
+    if (s && containerRef.current) {
+      const data = JSON.parse(s);
+      setOverrides(data.overrides || {});
+      setRenderKey((k) => k + 1);
+    }
+  }, [undoHist]);
+
+  const applyRedo = useCallback(() => {
+    const s = redoHist();
+    if (s && containerRef.current) {
+      const data = JSON.parse(s);
+      setOverrides(data.overrides || {});
+      setRenderKey((k) => k + 1);
+    }
+  }, [redoHist]);
+
+  useEffect(() => {
+    const kd = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); applyUndo(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); applyRedo(); }
+      if (e.key === 'Escape') {
+        setSelected('');
+      }
+    };
+    window.addEventListener('keydown', kd);
+    return () => window.removeEventListener('keydown', kd);
+  }, [applyUndo, applyRedo]);
+
+  const onClick = (e) => {
+    if (e.target.closest('.col-resize-handle')) return;
+    const hit = findSelectable(e.target);
+    if (hit) {
+      e.stopPropagation();
+      const dataEl = hit.el.closest('[data-rg-id]');
+      const rgId = dataEl?.getAttribute('data-rg-id');
+      if (!rgId) return;
+      setSelected(rgId);
+      setHovered('');
+    } else {
+      setSelected('');
+    }
+  };
+
+  const onDblClick = (e) => {
+    const hit = findSelectable(e.target);
+    if (!hit) return;
+    const txt = findTextContent(hit.el);
+    if (!txt) return;
+    e.stopPropagation();
+    saveSnapshot(JSON.stringify({ overrides }));
+    const wrap = txt.nodeType === 3 ? txt.parentElement : txt;
+    const rgId = hit.el.closest('[data-rg-id]')?.getAttribute('data-rg-id');
+    wrap.contentEditable = 'true';
+    wrap.focus();
+    wrap.style.outline = '2.5px solid #22c55e';
+    wrap.style.outlineOffset = '2px';
+    const range = document.createRange();
+    range.selectNodeContents(wrap);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    wrap.addEventListener('blur', () => {
+      wrap.contentEditable = 'false';
+      wrap.style.outline = '';
+      wrap.style.outlineOffset = '';
+      if (rgId === 'doc-title') {
+        const newText = wrap.textContent.trim();
+        setDocTitle(newText || null);
+        setRenderKey((k) => k + 1);
+      }
+    }, { once: true });
+  };
+
+  const onMouseOver = (e) => {
+    const hit = findSelectable(e.target);
+    if (hit) {
+      const dataEl = hit.el.closest('[data-rg-id]');
+      setHovered(dataEl?.getAttribute('data-rg-id') || '');
+    } else {
+      setHovered('');
+    }
+  };
+
+  const onMouseOut = () => setHovered('');
+
+  const updateStyle = (prop, val) => {
+    if (!selected) return;
+    saveSnapshot(JSON.stringify({ overrides }));
+    setOverrides((prev) => ({
+      ...prev,
+      [selected]: { ...prev[selected], [prop]: val },
+    }));
+    setRenderKey((k) => k + 1);
+  };
+
+  return {
+    hovered, selected, setSelected,
+    onClick, onDblClick, onMouseOver, onMouseOut,
+    updateStyle, applyUndo, applyRedo,
+  };
+}

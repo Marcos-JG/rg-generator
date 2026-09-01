@@ -1,0 +1,65 @@
+{
+  "country": "sv",
+  "docType": "03",
+  "title": "COMPROBANTES DE CRÉDITO FISCAL",
+  "version": "v2-0-0",
+  "sellerFields": [
+    { "id": "Name", "label": "Nombre o Razón Social", "required": true },
+    { "id": "NombreComercial", "label": "Nombre Comercial", "required": true },
+    { "id": "TaxID", "label": "NIT", "required": true },
+    { "id": "NRC", "label": "NRC", "required": true },
+    { "id": "DescActividad", "label": "Actividad Económica / Giro", "required": true },
+    { "id": "Address", "label": "Dirección", "required": true },
+    { "id": "Phone", "label": "Número de Teléfono", "required": true },
+    { "id": "Email", "label": "Correo Electrónico", "required": true },
+    { "id": "TipoEstablecimiento", "label": "Tipo de Establecimiento", "required": true }
+  ],
+  "buyerFields": [
+    { "id": "Name", "label": "Nombre o Razón Social", "required": true },
+    { "id": "TaxIDType", "label": "Tipo Documento Identificación", "required": true },
+    { "id": "TaxID", "label": "Número Documento Identificación", "required": true },
+    { "id": "Email", "label": "Correo Electrónico", "required": true },
+    { "id": "Address", "label": "Dirección", "required": true }
+  ],
+  "itemColumns": [
+    { "id": "Number", "label": "#", "width": "4%", "required": true },
+    { "id": "Qty", "label": "Cant.", "width": "6%", "required": true },
+    { "id": "UnitOfMeasure", "label": "U/M", "width": "6%", "required": true },
+    { "id": "Description", "label": "Descripción", "width": "26%", "required": true },
+    { "id": "Price", "label": "P. U.", "width": "9%", "required": true },
+    { "id": "NO_GRAVADO", "label": "M. N/A", "width": "10%", "required": false },
+    { "id": "Discount", "label": "Desc.", "width": "9%", "required": false },
+    { "id": "VENTA_NO_SUJETA", "label": "V. N/S", "width": "10%", "required": false },
+    { "id": "VENTA_EXENTA", "label": "V. Exenta", "width": "10%", "required": false },
+    { "id": "VENTA_GRAVADA", "label": "V. Gravada", "width": "10%", "required": true }
+  ],
+  "totalsFields": [
+    { "id": "VENTA_GRAVADA", "label": "Venta Gravada:", "required": true },
+    { "id": "VENTA_EXENTA", "label": "Venta Exenta:", "required": true },
+    { "id": "VENTA_NO_SUJETA", "label": "Venta No Sujeta:", "required": true },
+    { "id": "TOTAL_NO_GRAVADO", "label": "Total Otros Montos No Afectos:", "required": false },
+    { "id": "SUBTOTAL", "label": "Sub-Total:", "required": true },
+    { "id": "DESCUENTO", "label": "Descuento:", "required": false },
+    { "id": "IVA", "label": "IVA:", "required": true },
+    { "id": "IVA_PERCIBIDO", "label": "IVA Percibido:", "required": false },
+    { "id": "IVA_RETENIDO", "label": "IVA Retenido:", "required": false },
+    { "id": "RETENCION_RENTA", "label": "Retención Renta:", "required": false },
+    { "id": "MONTO_TOTAL_OPERACION", "label": "Monto Total de la Operación:", "required": true },
+    { "id": "TOTAL_PAGAR", "label": "TOTAL A PAGAR:", "required": true }
+  ],
+  "showSumasRow": true,
+  "showDteBox": true,
+  "dteBoxFields": ["GUID", "TipoModelo", "Secuencial", "TipoTransmision", "SelloRecepcion", "IssuedDateTime"],
+  "showFooter": true,
+  "showQR": true,
+  "style": {
+    "colorPrimary": "#020873",
+    "colorBorder": "#808080",
+    "colorTotalesBg": "#e6e6e6",
+    "colorTotalPagarBg": "#D1D5DB",
+    "fontSize": "7pt",
+    "fontSizeHeader": "12pt",
+    "fontFamily": "Arial, Helvetica, sans-serif",
+    "borderRadius": "6px"
+  }
+}
