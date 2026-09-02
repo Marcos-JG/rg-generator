@@ -5,6 +5,7 @@ import { extractXmlData } from '../../core/xmlParser';
 import useSelection from './useSelection';
 import useFieldDrag from './useFieldDrag';
 import useResize from './useResize';
+import useColumnResize from './useColumnResize';
 import { buildPreviewHtml } from './buildPreviewHtml';
 import StylePanel from './PreviewToolbar';
 
@@ -19,6 +20,7 @@ export default function InteractivePreview() {
 
   useFieldDrag(containerRef, renderKey, setRenderKey);
   useResize(containerRef, setOverrides, renderKey, setRenderKey);
+  useColumnResize(containerRef, setOverrides, renderKey, setRenderKey);
 
   const {
     hovered, selected, setSelected,
@@ -145,7 +147,7 @@ export default function InteractivePreview() {
         ref={containerRef}
         className="bg-white shadow-lg"
         data-preview-content
-        style={{ width: '8.5in', margin: '0 auto', padding: '0.25in', minHeight: '1056px', cursor: 'default' }}
+        style={{ width: '8.5in', height: '11in', margin: '0 auto', padding: '0.25in', boxSizing: 'border-box', position: 'relative', overflow: 'hidden', cursor: 'default' }}
         dangerouslySetInnerHTML={{ __html: html }}
         onClick={handleContainerClick}
         onDoubleClick={onDblClick}

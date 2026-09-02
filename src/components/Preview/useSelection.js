@@ -66,6 +66,7 @@ export default function useSelection(containerRef, overrides, setOverrides, rend
   }, [applyUndo, applyRedo, selected]);
 
   const onClick = (e) => {
+    if (containerRef.current?.hasAttribute('data-col-dragging')) return;
     if (e.target.closest('.col-resize-handle')) return;
     const hit = findSelectable(e.target);
     if (hit) {
@@ -111,6 +112,7 @@ export default function useSelection(containerRef, overrides, setOverrides, rend
   };
 
   const onMouseOver = (e) => {
+    if (containerRef.current?.hasAttribute('data-col-dragging')) return;
     const hit = findSelectable(e.target);
     if (hit) {
       const dataEl = hit.el.closest('[data-rg-id]');
@@ -120,7 +122,10 @@ export default function useSelection(containerRef, overrides, setOverrides, rend
     }
   };
 
-  const onMouseOut = () => setHovered('');
+  const onMouseOut = () => {
+    if (containerRef.current?.hasAttribute('data-col-dragging')) return;
+    setHovered('');
+  };
 
   const updateStyle = (prop, val) => {
     if (!selected) return;
