@@ -112,14 +112,43 @@ export default function DownloadButton() {
     const previewEl = document.querySelector('[data-preview-content]');
     if (!previewEl) return;
 
+    const renderCss = `
+      .dte-page-wrap, .dte-page-wrap * {
+        font-family: Arial, sans-serif;
+        font-size: 7pt;
+      }
+      .dte-page-wrap {
+        text-align: left;
+        background: white;
+      }
+      .dte-page-wrap table {
+        font-family: Arial, sans-serif;
+        font-size: 7pt;
+        background: white;
+      }
+      .dte-page-wrap td {
+        vertical-align: top;
+        border-color: #808080;
+        padding-left: 0.02in;
+        padding-right: 0.02in;
+        padding-top: 0.02in;
+        padding-bottom: 0.02in;
+      }
+    `;
+    const pageCss = `
+      body { margin: 0; padding: 0; }
+      .dte-page-wrap { width: 8.5in; margin: 0 auto; }
+    `;
+
     const fullHtml = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <title>RG - ${currentConfig?.title || 'Preview'}</title>
+  <style>${renderCss}${pageCss}</style>
 </head>
 <body>
-${previewEl.innerHTML}
+  <div class="dte-page-wrap">${previewEl.innerHTML}</div>
 </body>
 </html>`;
 
@@ -138,15 +167,34 @@ ${previewEl.innerHTML}
     const previewEl = document.querySelector('[data-preview-content]');
     if (!previewEl) return;
 
+    const renderCss = `
+      .dte-page-wrap, .dte-page-wrap * {
+        font-family: Arial, sans-serif;
+        font-size: 7pt;
+      }
+      .dte-page-wrap td {
+        vertical-align: top;
+        border-color: #808080;
+        padding-left: 0.02in;
+        padding-right: 0.02in;
+        padding-top: 0.02in;
+        padding-bottom: 0.02in;
+      }
+      @media print {
+        body { font-size: 7pt; }
+        .dte-page-wrap { width: 8.5in; margin: 0 auto; }
+      }
+    `;
+
     const fullHtml = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <title>RG - ${currentConfig?.title || 'Preview'}</title>
-  <style>@media print { body { font-size: 7pt; } }</style>
+  <style>${renderCss}</style>
 </head>
 <body>
-${previewEl.innerHTML}
+  <div class="dte-page-wrap">${previewEl.innerHTML}</div>
 </body>
 </html>`;
 
