@@ -1,5 +1,6 @@
 import { useConfigStore } from '../../stores/configStore';
 import { generateXslt } from '../../core/xsltGenerator';
+import { extractXmlData } from '../../core/xmlParser';
 import Button from '../shared/Button';
 
 const BASE_TEMPLATE = `<?xml version="1.0" encoding="UTF-8"?>
@@ -126,7 +127,15 @@ export default function DownloadButton() {
       xslt = customXslt;
       fileName = customXsltName || 'custom.xsl';
     } else {
-      xslt = generateXslt(BASE_TEMPLATE, currentConfig, { ...userStyle, docTitle });
+      let xmlData = null;
+      if (xmlString) {
+        try {
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+          if (!xmlDoc.querySelector('parsererror')) xmlData = extractXmlData(xmlDoc);
+        } catch (e) { /* ignore */ }
+      }
+      xslt = generateXslt(BASE_TEMPLATE, currentConfig, { ...userStyle, docTitle }, xmlData);
       fileName = `RG-${metadata?.country || 'XX'}-${currentConfig.docType}-${currentConfig.title.replace(/\s+/g, '_')}.xsl`;
     }
 

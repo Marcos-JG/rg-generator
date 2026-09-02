@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useConfigStore } from '../../stores/configStore';
 import { generateXslt } from '../../core/xsltGenerator';
 import { transformXmlToHtml } from '../../core/xmlTransformer';
+import { extractXmlData } from '../../core/xmlParser';
 
 export default function PreviewFrame() {
   const { xmlString, currentConfig, userStyle } = useConfigStore();
@@ -121,7 +122,13 @@ export default function PreviewFrame() {
   </xsl:template>
 </xsl:stylesheet>`;
 
-      const xslt = generateXslt(baseTemplate, currentConfig, userStyle);
+      let xmlData = null;
+      try {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+        if (!xmlDoc.querySelector('parsererror')) xmlData = extractXmlData(xmlDoc);
+      } catch (e) { /* ignore */ }
+      const xslt = generateXslt(baseTemplate, currentConfig, userStyle, xmlData);
       return transformXmlToHtml(xmlString, xslt);
     } catch (err) {
       return `<div style="color:red;padding:20px;"><h3>Error generando preview</h3><pre>${err.message}</pre></div>`;

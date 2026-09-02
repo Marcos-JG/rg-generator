@@ -29,10 +29,10 @@ export default function StylePanel({ selected, overrides, updateStyle, onClose, 
           </select>
         </Row>
         <Row label="Padding">
-          <input type="text" value={ov.padding || ''} onChange={(e) => updateStyle('padding', e.target.value)} className="flex-1 border rounded px-2 py-1" placeholder="8px" />
+          <PxInput value={ov.padding} onChange={(v) => updateStyle('padding', v)} />
         </Row>
-        <Row label="Borde">
-          <input type="text" value={ov.borderRadius || ''} onChange={(e) => updateStyle('borderRadius', e.target.value)} className="flex-1 border rounded px-2 py-1" placeholder="6px" />
+        <Row label="Borde (radio)">
+          <PxInput value={ov.borderRadius} onChange={(v) => updateStyle('borderRadius', v)} placeholders={[0, 6, 10, 15]} />
         </Row>
         <Row label="Alineación">
           <div className="flex gap-1">
@@ -48,16 +48,16 @@ export default function StylePanel({ selected, overrides, updateStyle, onClose, 
           </div>
         </Row>
         <Row label="Ancho">
-          <input type="text" value={ov.width || ''} onChange={(e) => updateStyle('width', e.target.value)} className="flex-1 border rounded px-2 py-1" placeholder="100%" />
+          <SizeInput value={ov.width} onChange={(v) => updateStyle('width', v)} allowPercent />
         </Row>
         <Row label="Alto">
-          <input type="text" value={ov.height || ''} onChange={(e) => updateStyle('height', e.target.value)} className="flex-1 border rounded px-2 py-1" placeholder="auto" />
+          <SizeInput value={ov.height} onChange={(v) => updateStyle('height', v)} />
         </Row>
         <Row label="Margen Sup">
-          <input type="text" value={ov.marginTop || ''} onChange={(e) => updateStyle('marginTop', e.target.value)} className="flex-1 border rounded px-2 py-1" placeholder="0px" />
+          <PxInput value={ov.marginTop} onChange={(v) => updateStyle('marginTop', v)} />
         </Row>
         <Row label="Margen Inf">
-          <input type="text" value={ov.marginBottom || ''} onChange={(e) => updateStyle('marginBottom', e.target.value)} className="flex-1 border rounded px-2 py-1" placeholder="0px" />
+          <PxInput value={ov.marginBottom} onChange={(v) => updateStyle('marginBottom', v)} />
         </Row>
       </div>
       <p className="text-[10px] text-gray-400 p-3 border-t">Doble clic para editar texto inline</p>
@@ -72,4 +72,83 @@ export default function StylePanel({ selected, overrides, updateStyle, onClose, 
 
 function Row({ label, children }) {
   return <div className="flex flex-col gap-1"><label className="text-gray-500">{label}</label><div className="flex items-center gap-2">{children}</div></div>;
+}
+
+function parseSize(v) {
+  const m = String(v || '').trim().match(/^(-?[\d.]+)\s*(px|%|pt|em|in|auto)?$/i);
+  if (v === 'auto' || String(v).toLowerCase() === 'auto') return { num: '', unit: 'auto' };
+  if (!m) return { num: '', unit: 'px' };
+  return { num: m[1], unit: (m[2] || 'px').toLowerCase() };
+}
+
+function PxInput({ value, onChange, placeholders = [0, 4, 10, 20] }) {
+  const { num, unit } = parseSize(value);
+  const set = (n) => onChange(n === '' || n == null ? '' : `${n}px`);
+  return (
+    <div className="flex-1 flex items-center gap-1">
+      <input
+        type="number"
+        value={num}
+        min="0"
+        step="1"
+        onChange={(e) => set(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && e.target.value === '') set(0);
+        }}
+        className="flex-1 min-w-0 border rounded px-2 py-1"
+        placeholder="—"
+      />
+      <span className="text-gray-400 text-[10px]">px</span>
+      <div className="flex gap-0.5">
+        {placeholders.map((p) => (
+          <button
+            key={p}
+            title={`${p} px`}
+            onClick={() => set(p)}
+            className={`px-1.5 py-1 rounded text-[10px] border cursor-pointer ${num === String(p) ? 'bg-blue-100 border-blue-400 text-blue-700' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SizeInput({ value, onChange, allowPercent }) {
+  const { num, unit } = parseSize(value);
+  const set = (n, u) => {
+    const v = u === 'auto' ? 'auto' : `${n}${u}`;
+    onChange(n === '' || n == null ? '' : v);
+  };
+  return (
+    <div className="flex-1 flex items-center gap-1">
+      <input
+        type="number"
+        value={num}
+        min="0"
+        step="1"
+        disabled={unit === 'auto'}
+        onChange={(e) => set(e.target.value, unit)}
+        className="flex-1 min-w-0 border rounded px-2 py-1 disabled:bg-gray-100"
+        placeholder="—"
+      />
+      <select
+        value={unit}
+        onChange={(e) => set(num || '100', e.target.value)}
+        className="border rounded px-1 py-1 text-[10px]"
+      >
+        <option value="px">px</option>
+        {allowPercent && <option value="%">%</option>}
+        <option value="auto">auto</option>
+      </select>
+      <button
+        title="Borrar"
+        onClick={() => onChange('')}
+        className="px-1.5 rounded border border-gray-200 text-gray-400 hover:text-red-500 hover:bg-red-50 cursor-pointer"
+      >
+        ✕
+      </button>
+    </div>
+  );
 }
