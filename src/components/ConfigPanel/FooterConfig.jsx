@@ -14,7 +14,7 @@ export default function FooterConfig() {
         id="footerText"
         value={userStyle.footerText}
         onChange={(v) => updateUserStyle({ footerText: v })}
-        placeholder="Documento generado por RG Generator"
+        placeholder="DIGIFACT SERVICIOS, SOCIEDAD ANONIMA https://www.digifact.com.sv, NIT 0614-230822-102-5, NRC 318270-1"
       />
     </div>
   );

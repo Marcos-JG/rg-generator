@@ -1,4 +1,5 @@
 import { cssStr } from './helpers';
+import { buildFooterText } from '../../core/svFormat';
 
 export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides, selected, hovered, docTitle }) {
   const s = { ...currentConfig.style, ...userStyle };
@@ -54,9 +55,10 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
   };
   const sellerRows = emisorFieldOrder.map(id => emisorRowMap[id]).filter(Boolean).join('');
 
-  const receptorFieldOrder = currentConfig.fieldOrders?.buyer || ['buyer-name', 'buyer-nit', 'buyer-nrc', 'buyer-address', 'buyer-email'];
+  const receptorFieldOrder = currentConfig.fieldOrders?.buyer || ['buyer-name', 'buyer-taxidtype', 'buyer-nit', 'buyer-nrc', 'buyer-address', 'buyer-email'];
   const receptorRowMap = {
     'buyer-name': mkRow('buyer-name', 'Nombre o Razón Social:', xmlData?.buyer?.Name),
+    'buyer-taxidtype': mkRow('buyer-taxidtype', 'Tipo Doc. Identificación:', xmlData?.buyer?.TaxIDType),
     'buyer-nit': mkRow('buyer-nit', 'NIT:', xmlData?.buyer?.TaxID),
     'buyer-nrc': mkRow('buyer-nrc', 'NRC:', xmlData?.buyer?.NRC),
     'buyer-address': mkRow('buyer-address', 'Dirección:', xmlData?.buyer?.Address),
@@ -253,8 +255,44 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
               <span style="font-weight:bold">Valor en Letras:&nbsp;</span>${xmlData?.inWords || '[Valor en Letras]'}
             </div>
             <div style="padding:4px">
-              <span style="font-weight:bold">Condición de la Operación:&nbsp;</span>Contado
+              <span style="font-weight:bold">Condición de la Operación:&nbsp;</span>${xmlData?.condicionOperacion || '[Condición de la Operación]'}
             </div>
+            ${(xmlData?.payments || []).map((p) => `
+              <div style="padding:4px">
+                <span style="font-weight:bold">Forma de Pago:&nbsp;</span>${p.label}${p.amount && p.amount !== '0.00' ? ` (${p.amount})` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>`;
+    }
+    if (sec === 'datos-adicionales') {
+      const daSt = buildWithOverrides('section-datos-adicionales', { flex: '1', minWidth: '0', cursor: 'grab', position: 'relative', minHeight: '40px' });
+      const daInnerSt = buildWithOverrides('datos-adicionales', { height: '100%', width: '100%', boxSizing: 'border-box' });
+      const daHandles = `<div data-resize="n" draggable="false" style="position:absolute;top:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="w" draggable="false" style="position:absolute;left:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="e" draggable="false" style="position:absolute;right:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="h" draggable="false" style="position:absolute;bottom:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="he" draggable="false" style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;cursor:nwse-resize;z-index:10;pointer-events:auto"></div>`;
+      const daRow = (label) => `<tr data-rg-id="da-${label}" data-field-id="da-${label}" class="field-draggable" draggable="true">
+        <td style="font-weight:bold;white-space:nowrap;padding:2px 4px;width:35%">${label}:&nbsp;</td>
+        <td style="padding:2px 4px">${xmlData?.adenda?.[label] || `[${label}]`}</td>
+      </tr>`;
+      return `<div data-rg-id="section-datos-adicionales" data-drag-section="datos-adicionales" class="${cls('section', 'section-datos-adicionales')}" draggable="true"
+        style="${cssStr(daSt)}">
+        ${daHandles}
+        <div data-rg-id="datos-adicionales" class="${cls('section', 'datos-adicionales')}" style="${cssStr(daInnerSt)}">
+          <div style="border:1px solid ${s.colorBorder};border-radius:5px;height:100%;box-sizing:border-box;padding:4px">
+            <table width="100%" cellPadding="0" cellSpacing="0" border="0">
+              <tbody>
+                ${daRow('REFERENCIA_INTERNA')}
+                ${daRow('CodigoCliente')}
+                ${daRow('Num_OrdenCompra')}
+                ${daRow('CondicionPago')}
+                ${daRow('NRC_COF')}
+                ${daRow('FechaVencimiento')}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>`;
@@ -272,14 +310,14 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
         style="${cssStr(footerSt)}">
         ${resizeHandles}
         <div data-rg-id="footer" class="${cls('footer', 'footer')}" style="${cssStr(footerInnerSt)}">
-          ${userStyle.footerText || 'Documento generado por RG Generator'}
+          ${buildFooterText(xmlData, userStyle.footerText || 'DIGIFACT SERVICIOS, SOCIEDAD ANONIMA https://www.digifact.com.sv, NIT 0614-230822-102-5, NRC 318270-1')}
         </div>
       </div>`;
     }
     return '';
   };
 
-  const layoutGrid = currentConfig.layoutGrid || [['emisor', 'receptor'], ['items'], ['totals', 'observaciones'], ['footer']];
+  const layoutGrid = currentConfig.layoutGrid || [['emisor', 'receptor'], ['items'], ['totals', 'observaciones'], ['datos-adicionales'], ['footer']];
 
   const gridHtml = layoutGrid.map((row, rowIdx) => {
     const cellsHtml = row.map(sec => renderSection(sec)).join('');

@@ -7,6 +7,7 @@ const SECTION_LABELS = {
   items: 'Ítems',
   totals: 'Totales',
   observaciones: 'Observaciones',
+  'datos-adicionales': 'Datos Adicionales',
   footer: 'Footer',
   'header-logo': 'Logo',
   'header-ids': 'GUID',
@@ -14,13 +15,14 @@ const SECTION_LABELS = {
   'header-info': 'Info Documento',
 };
 
-const ALL_SECTIONS = ['emisor', 'receptor', 'items', 'totals', 'observaciones', 'footer'];
+const ALL_SECTIONS = ['emisor', 'receptor', 'items', 'totals', 'observaciones', 'datos-adicionales', 'footer'];
 const ALL_HEADER_SECTIONS = ['header-logo', 'header-ids', 'header-qr', 'header-info'];
 
 const DEFAULT_GRID = [
   ['emisor', 'receptor'],
   ['items'],
   ['totals', 'observaciones'],
+  ['datos-adicionales'],
   ['footer'],
 ];
 

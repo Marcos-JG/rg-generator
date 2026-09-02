@@ -3,9 +3,9 @@ import Sidebar from './components/Layout/Sidebar';
 import XmlUploader from './components/ConfigPanel/XmlUploader';
 import DocInfo from './components/ConfigPanel/DocInfo';
 import VersionSelect from './components/ConfigPanel/VersionSelect';
-import LayoutConfig from './components/ConfigPanel/LayoutConfig';
 import FieldToggles from './components/ConfigPanel/FieldToggles';
 import ColumnConfig from './components/ConfigPanel/ColumnConfig';
+import LayoutConfig from './components/ConfigPanel/LayoutConfig';
 import StyleConfig from './components/ConfigPanel/StyleConfig';
 import FooterConfig from './components/ConfigPanel/FooterConfig';
 import InteractivePreview from './components/Preview/InteractivePreview';
@@ -24,9 +24,9 @@ export default function App() {
           <XmlUploader />
           <DocInfo />
           <VersionSelect />
-          <LayoutConfig />
           <FieldToggles />
           <ColumnConfig />
+          <LayoutConfig />
           <StyleConfig />
           <FooterConfig />
         </Sidebar>

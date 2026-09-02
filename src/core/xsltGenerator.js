@@ -1,5 +1,6 @@
 import { escapeXml } from './escapeXml.js';
 import { replaceAllPlaceholders } from './templateEngine.js';
+import { buildFooterText } from './svFormat.js';
 
 function generateFieldXslt(field, section) {
   const xpath = `${section}/${field.id}`;
@@ -174,7 +175,7 @@ function generateTotalsXslt(config) {
   return htmlRows + '\n' + pagarRow;
 }
 
-export function generateXslt(baseTemplate, config, userStyle = {}) {
+export function generateXslt(baseTemplate, config, userStyle = {}, xmlData = null) {
   let xslt = baseTemplate;
   const style = { ...config.style, ...userStyle };
 
@@ -222,7 +223,7 @@ export function generateXslt(baseTemplate, config, userStyle = {}) {
   const totalsXslt = generateTotalsXslt(config);
   xslt = replaceAllPlaceholders(xslt, 'TOTALS_ROWS', totalsXslt);
 
-  const footerText = userStyle.footerText || 'Documento generado por RG Generator';
+  const footerText = buildFooterText(xmlData, userStyle.footerText || 'DIGIFACT SERVICIOS, SOCIEDAD ANONIMA https://www.digifact.com.sv, NIT 0614-230822-102-5, NRC 318270-1');
   xslt = replaceAllPlaceholders(xslt, 'FOOTER_TEXT', escapeXml(footerText));
 
   const borderRadius = style.borderRadius || '6px';

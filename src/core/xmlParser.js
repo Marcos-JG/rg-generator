@@ -260,7 +260,30 @@ export function extractXmlData(xmlDoc) {
     Version: getTextContent(xmlDoc, 'Root > Version') || getTextContent(xmlDoc, 'Version') || '',
   };
 
+  const condicionOperacion = getInfoValue(xmlDoc, 'Totals > AdditionalInfo > Info', 'CondicionOperacion');
+  const condicionMap = { '1': 'Contado', '2': 'A Crédito', '3': 'Otro' };
+  const condicionTexto = condicionMap[condicionOperacion] || condicionOperacion || '';
+
+  const payMap = {
+    '01': 'Billetes y monedas', '02': 'Tarjeta Débito', '03': 'Tarjeta Crédito',
+    '04': 'Cheque', '05': 'Transferencia-Depósito Bancario', '08': 'Dinero electrónico',
+    '09': 'Monedero electrónico', '11': 'Bitcoin', '12': 'Otras Criptomonedas',
+    '13': 'Cuentas por pagar del receptor', '14': 'Giro bancario', '99': 'Otros',
+  };
+  const payments = [];
+  xmlDoc.querySelectorAll('Payments > Payment').forEach((p) => {
+    const code = p.querySelector('Code')?.textContent || '';
+    const amount = p.querySelector('Amount')?.textContent || '';
+    if (code) payments.push({ code, label: payMap[code] || code, amount });
+  });
+
   const inWords = getTextContent(xmlDoc, 'Totals > InWords') || '';
 
-  return { seller, buyer, items, totals, header, inWords };
+  const adendaFields = ['REFERENCIA_INTERNA', 'CodigoCliente', 'Num_OrdenCompra', 'CondicionPago', 'NRC_COF', 'FechaVencimiento'];
+  const adenda = {};
+  adendaFields.forEach((f) => {
+    adenda[f] = getInfoValue(xmlDoc, 'AdditionalDocumentInfo > AdditionalInfo > AditionalData > Data > Info', f);
+  });
+
+  return { seller, buyer, items, totals, header, inWords, condicionOperacion: condicionTexto, payments, adenda };
 }

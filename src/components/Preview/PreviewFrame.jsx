@@ -79,6 +79,39 @@ export default function PreviewFrame() {
             <table>
               <tr><td><strong>GUID:</strong></td><td><xsl:value-of select="Root/Header/GUID"/></td></tr>
               <tr><td><strong>Fecha:</strong></td><td><xsl:value-of select="concat(substring(Root/Header/IssuedDateTime,9,2), '-', substring(Root/Header/IssuedDateTime,6,2), '-', substring(Root/Header/IssuedDateTime,1,4), ' ', substring(Root/Header/IssuedDateTime,12,8))"/></td></tr>
+              <tr>
+                <td><strong>Condición de la Operación:</strong></td>
+                <td>
+                  <xsl:choose>
+                    <xsl:when test="Root/Totals/AdditionalInfo/Info[@Name='CondicionOperacion']/@Value = '1'">Contado</xsl:when>
+                    <xsl:when test="Root/Totals/AdditionalInfo/Info[@Name='CondicionOperacion']/@Value = '2'">A Crédito</xsl:when>
+                    <xsl:when test="Root/Totals/AdditionalInfo/Info[@Name='CondicionOperacion']/@Value = '3'">Otro</xsl:when>
+                    <xsl:otherwise>[Condición de la Operación]</xsl:otherwise>
+                  </xsl:choose>
+                </td>
+              </tr>
+              <xsl:for-each select="Root/Payments/Payment">
+                <tr>
+                  <td><strong>Forma de Pago:</strong></td>
+                  <td>
+                    <xsl:choose>
+                      <xsl:when test="Code = '01'">Billetes y monedas</xsl:when>
+                      <xsl:when test="Code = '02'">Tarjeta Débito</xsl:when>
+                      <xsl:when test="Code = '03'">Tarjeta Crédito</xsl:when>
+                      <xsl:when test="Code = '04'">Cheque</xsl:when>
+                      <xsl:when test="Code = '05'">Transferencia-Depósito Bancario</xsl:when>
+                      <xsl:when test="Code = '08'">Dinero electrónico</xsl:when>
+                      <xsl:when test="Code = '09'">Monedero electrónico</xsl:when>
+                      <xsl:when test="Code = '11'">Bitcoin</xsl:when>
+                      <xsl:when test="Code = '12'">Otras Criptomonedas</xsl:when>
+                      <xsl:when test="Code = '13'">Cuentas por pagar del receptor</xsl:when>
+                      <xsl:when test="Code = '14'">Giro bancario</xsl:when>
+                      <xsl:otherwise>Otros</xsl:otherwise>
+                    </xsl:choose>
+                    <xsl:text> </xsl:text><xsl:value-of select="Amount"/>
+                  </td>
+                </tr>
+              </xsl:for-each>
             </table>
           </div>
           <div class="footer">{{FOOTER_TEXT}}</div>

@@ -166,8 +166,55 @@
                     </tr>
                     <tr>
                       <td width="20%" style="text-align:right;font-weight:bold;padding:4px">Condición de la Operación:</td>
-                      <td style="padding:4px"><xsl:call-template name="CondicionOperacion"/></td>
+                      <td style="padding:4px">
+                        <xsl:choose>
+                          <xsl:when test="Root/Totals/AdditionalInfo/Info[@Name='CondicionOperacion']/@Value = '1'">Contado</xsl:when>
+                          <xsl:when test="Root/Totals/AdditionalInfo/Info[@Name='CondicionOperacion']/@Value = '2'">A Crédito</xsl:when>
+                          <xsl:when test="Root/Totals/AdditionalInfo/Info[@Name='CondicionOperacion']/@Value = '3'">Otro</xsl:when>
+                          <xsl:otherwise>[Condición de la Operación]</xsl:otherwise>
+                        </xsl:choose>
+                      </td>
                     </tr>
+                    <xsl:for-each select="Root/Payments/Payment">
+                      <tr>
+                        <td width="20%" style="text-align:right;font-weight:bold;padding:4px">Forma de Pago:</td>
+                        <td style="padding:4px">
+                          <xsl:choose>
+                            <xsl:when test="Code = '01'">Billetes y monedas</xsl:when>
+                            <xsl:when test="Code = '02'">Tarjeta Débito</xsl:when>
+                            <xsl:when test="Code = '03'">Tarjeta Crédito</xsl:when>
+                            <xsl:when test="Code = '04'">Cheque</xsl:when>
+                            <xsl:when test="Code = '05'">Transferencia-Depósito Bancario</xsl:when>
+                            <xsl:when test="Code = '08'">Dinero electrónico</xsl:when>
+                            <xsl:when test="Code = '09'">Monedero electrónico</xsl:when>
+                            <xsl:when test="Code = '11'">Bitcoin</xsl:when>
+                            <xsl:when test="Code = '12'">Otras Criptomonedas</xsl:when>
+                            <xsl:when test="Code = '13'">Cuentas por pagar del receptor</xsl:when>
+                            <xsl:when test="Code = '14'">Giro bancario</xsl:when>
+                            <xsl:otherwise>Otros</xsl:otherwise>
+                          </xsl:choose>
+                          <xsl:text> </xsl:text>
+                          <xsl:value-of select="Amount"/>
+                        </td>
+                      </tr>
+                    </xsl:for-each>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="observaciones" style="margin-top:10px">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="border:1px solid {{COLOR_BORDER}};border-radius:5px;padding:4px">
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr><td width="20%" style="text-align:right;font-weight:bold;padding:4px">REFERENCIA_INTERNA:</td><td style="padding:4px"><xsl:value-of select="Root/AdditionalDocumentInfo/AdditionalInfo/AditionalData/Data/Info[@Name='REFERENCIA_INTERNA']/@Value"/></td></tr>
+                    <tr><td width="20%" style="text-align:right;font-weight:bold;padding:4px">CodigoCliente:</td><td style="padding:4px"><xsl:value-of select="Root/AdditionalDocumentInfo/AdditionalInfo/AditionalData/Data/Info[@Name='CodigoCliente']/@Value"/></td></tr>
+                    <tr><td width="20%" style="text-align:right;font-weight:bold;padding:4px">Num_OrdenCompra:</td><td style="padding:4px"><xsl:value-of select="Root/AdditionalDocumentInfo/AdditionalInfo/AditionalData/Data/Info[@Name='Num_OrdenCompra']/@Value"/></td></tr>
+                    <tr><td width="20%" style="text-align:right;font-weight:bold;padding:4px">CondicionPago:</td><td style="padding:4px"><xsl:value-of select="Root/AdditionalDocumentInfo/AdditionalInfo/AditionalData/Data/Info[@Name='CondicionPago']/@Value"/></td></tr>
+                    <tr><td width="20%" style="text-align:right;font-weight:bold;padding:4px">NRC_COF:</td><td style="padding:4px"><xsl:value-of select="Root/AdditionalDocumentInfo/AdditionalInfo/AditionalData/Data/Info[@Name='NRC_COF']/@Value"/></td></tr>
+                    <tr><td width="20%" style="text-align:right;font-weight:bold;padding:4px">FechaVencimiento:</td><td style="padding:4px"><xsl:value-of select="Root/AdditionalDocumentInfo/AdditionalInfo/AditionalData/Data/Info[@Name='FechaVencimiento']/@Value"/></td></tr>
                   </table>
                 </td>
               </tr>
