@@ -63,10 +63,6 @@ export default function useResize(containerRef, setOverrides, renderKey, setRend
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
 
-      el.querySelectorAll('[draggable="false"]').forEach(n => {
-        n.setAttribute('draggable', 'true');
-      });
-
       setOverrides((prev) => ({
         ...prev,
         [rgId]: { ...(prev[rgId] || {}), ...(w ? { width: w } : {}), ...(h ? { height: h } : {}) },

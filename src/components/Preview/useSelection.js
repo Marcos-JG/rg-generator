@@ -32,15 +32,38 @@ export default function useSelection(containerRef, overrides, setOverrides, rend
 
   useEffect(() => {
     const kd = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); applyUndo(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); applyRedo(); }
-      if (e.key === 'Escape') {
-        setSelected('');
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); applyUndo(); return; }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); applyRedo(); return; }
+      if (e.key === 'Escape') { setSelected(''); return; }
+
+      if (!selected || e.target.contentEditable === 'true') return;
+
+      const step = e.shiftKey ? 10 : 1;
+      const map = { ArrowLeft: ['left', -step], ArrowRight: ['left', step], ArrowUp: ['top', -step], ArrowDown: ['top', step] };
+      const entry = map[e.key];
+      if (!entry) return;
+      if (selected.startsWith('grid-row') || selected.startsWith('header-row')) return;
+
+      e.preventDefault();
+
+      const el = containerRef.current?.querySelector(`[data-rg-id="${selected}"]`);
+      let targetKey = selected;
+      if (el) {
+        const section = el.closest('[data-drag-section]');
+        if (section) targetKey = 'section-' + section.getAttribute('data-drag-section');
       }
+
+      const [prop, delta] = entry;
+      setOverrides((prev) => {
+        const cur = prev[targetKey] || {};
+        const curVal = parseFloat(cur[prop]) || 0;
+        return { ...prev, [targetKey]: { ...cur, [prop]: curVal + delta + 'px' } };
+      });
+      setRenderKey((k) => k + 1);
     };
     window.addEventListener('keydown', kd);
     return () => window.removeEventListener('keydown', kd);
-  }, [applyUndo, applyRedo]);
+  }, [applyUndo, applyRedo, selected]);
 
   const onClick = (e) => {
     if (e.target.closest('.col-resize-handle')) return;

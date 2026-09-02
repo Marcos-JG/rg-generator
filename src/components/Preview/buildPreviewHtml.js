@@ -269,11 +269,11 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
       const footerOv = overrides['footer'] || {};
       const footerSt = buildWithOverrides('section-footer', { flex: '1', minWidth: '0', cursor: 'grab', position: 'relative', minHeight: '40px' });
       const footerInnerSt = buildWithOverrides('footer', { textAlign: footerOv.textAlign || 'center', paddingTop: '10px', paddingBottom: '10px', borderTop: `1px solid ${s.colorBorder}`, fontSize: '80%', color: '#666', height: '100%', boxSizing: 'border-box' });
-      const resizeHandles = `<div data-resize="n" draggable="false" style="position:absolute;top:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10"></div>
-        <div data-resize="w" draggable="false" style="position:absolute;left:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10"></div>
-        <div data-resize="e" draggable="false" style="position:absolute;right:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10"></div>
-        <div data-resize="h" draggable="false" style="position:absolute;bottom:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10"></div>
-        <div data-resize="he" draggable="false" style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;cursor:nwse-resize;z-index:10"></div>`;
+      const resizeHandles = `<div data-resize="n" draggable="false" style="position:absolute;top:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="w" draggable="false" style="position:absolute;left:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="e" draggable="false" style="position:absolute;right:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="h" draggable="false" style="position:absolute;bottom:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="he" draggable="false" style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;cursor:nwse-resize;z-index:10;pointer-events:auto"></div>`;
       return `<div data-rg-id="section-footer" data-drag-section="footer" class="${cls('section', 'section-footer')}" draggable="true"
         style="${cssStr(footerSt)}">
         ${resizeHandles}
@@ -296,11 +296,11 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     if (sec === 'header-logo') {
       const outerSt = buildWithOverrides('section-header-logo', { flex: '1', minWidth: '0', cursor: 'grab', position: 'relative', minHeight: '40px' });
       const innerSt = buildWithOverrides('header-logo', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', alignItems: 'center' });
-      const handles = `<div data-resize="n" draggable="false" style="position:absolute;top:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10"></div>
-        <div data-resize="w" draggable="false" style="position:absolute;left:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10"></div>
-        <div data-resize="e" draggable="false" style="position:absolute;right:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10"></div>
-        <div data-resize="h" draggable="false" style="position:absolute;bottom:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10"></div>
-        <div data-resize="he" draggable="false" style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;cursor:nwse-resize;z-index:10"></div>`;
+      const handles = `<div data-resize="n" draggable="false" style="position:absolute;top:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="w" draggable="false" style="position:absolute;left:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="e" draggable="false" style="position:absolute;right:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="h" draggable="false" style="position:absolute;bottom:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="he" draggable="false" style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;cursor:nwse-resize;z-index:10;pointer-events:auto"></div>`;
       return `<div data-rg-id="section-header-logo" data-drag-section="header-logo" class="${cls('section', 'section-header-logo')}" draggable="true"
         style="${cssStr(outerSt)}">
         ${handles}
@@ -312,11 +312,11 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     if (sec === 'header-ids') {
       const outerSt = buildWithOverrides('section-header-ids', { flex: '1', minWidth: '0', cursor: 'grab', position: 'relative', minHeight: '40px' });
       const innerSt = buildWithOverrides('header-ids', { height: '100%', width: '100%', boxSizing: 'border-box' });
-      const handles = `<div data-resize="n" draggable="false" style="position:absolute;top:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10"></div>
-        <div data-resize="w" draggable="false" style="position:absolute;left:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10"></div>
-        <div data-resize="e" draggable="false" style="position:absolute;right:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10"></div>
-        <div data-resize="h" draggable="false" style="position:absolute;bottom:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10"></div>
-        <div data-resize="he" draggable="false" style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;cursor:nwse-resize;z-index:10"></div>`;
+      const handles = `<div data-resize="n" draggable="false" style="position:absolute;top:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="w" draggable="false" style="position:absolute;left:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="e" draggable="false" style="position:absolute;right:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="h" draggable="false" style="position:absolute;bottom:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="he" draggable="false" style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;cursor:nwse-resize;z-index:10;pointer-events:auto"></div>`;
       return `<div data-rg-id="section-header-ids" data-drag-section="header-ids" class="${cls('section', 'section-header-ids')}" draggable="true"
         style="${cssStr(outerSt)}">
         ${handles}
@@ -332,11 +332,11 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     if (sec === 'header-qr') {
       const outerSt = buildWithOverrides('section-header-qr', { flex: '1', minWidth: '0', cursor: 'grab', position: 'relative', minHeight: '40px' });
       const innerSt = buildWithOverrides('header-qr', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', alignItems: 'flex-end' });
-      const handles = `<div data-resize="n" draggable="false" style="position:absolute;top:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10"></div>
-        <div data-resize="w" draggable="false" style="position:absolute;left:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10"></div>
-        <div data-resize="e" draggable="false" style="position:absolute;right:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10"></div>
-        <div data-resize="h" draggable="false" style="position:absolute;bottom:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10"></div>
-        <div data-resize="he" draggable="false" style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;cursor:nwse-resize;z-index:10"></div>`;
+      const handles = `<div data-resize="n" draggable="false" style="position:absolute;top:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="w" draggable="false" style="position:absolute;left:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="e" draggable="false" style="position:absolute;right:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="h" draggable="false" style="position:absolute;bottom:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="he" draggable="false" style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;cursor:nwse-resize;z-index:10;pointer-events:auto"></div>`;
       return `<div data-rg-id="section-header-qr" data-drag-section="header-qr" class="${cls('section', 'section-header-qr')}" draggable="true"
         style="${cssStr(outerSt)}">
         ${handles}
@@ -348,11 +348,11 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     if (sec === 'header-info') {
       const outerSt = buildWithOverrides('section-header-info', { flex: '1', minWidth: '0', cursor: 'grab', position: 'relative', minHeight: '40px' });
       const innerSt = buildWithOverrides('header-info', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', fontWeight: '700', fontSize: '9pt', lineHeight: '1.6' });
-      const handles = `<div data-resize="n" draggable="false" style="position:absolute;top:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10"></div>
-        <div data-resize="w" draggable="false" style="position:absolute;left:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10"></div>
-        <div data-resize="e" draggable="false" style="position:absolute;right:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10"></div>
-        <div data-resize="h" draggable="false" style="position:absolute;bottom:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10"></div>
-        <div data-resize="he" draggable="false" style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;cursor:nwse-resize;z-index:10"></div>`;
+      const handles = `<div data-resize="n" draggable="false" style="position:absolute;top:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="w" draggable="false" style="position:absolute;left:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="e" draggable="false" style="position:absolute;right:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="h" draggable="false" style="position:absolute;bottom:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10;pointer-events:auto"></div>
+        <div data-resize="he" draggable="false" style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;cursor:nwse-resize;z-index:10;pointer-events:auto"></div>`;
       return `<div data-rg-id="section-header-info" data-drag-section="header-info" class="${cls('section', 'section-header-info')}" draggable="true"
         style="${cssStr(outerSt)}">
         ${handles}
