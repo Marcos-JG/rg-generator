@@ -238,7 +238,7 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     }
     if (sec === 'observaciones') {
       const obsSt = buildWithOverrides('section-observaciones', { flex: '1', minWidth: '0', cursor: 'grab', position: 'relative', minHeight: '40px' });
-      const obsInnerSt = buildWithOverrides('observaciones', { minHeight: '100%', width: '100%', boxSizing: 'border-box' });
+      const obsInnerSt = buildWithOverrides('observaciones', { height: '100%', width: '100%', boxSizing: 'border-box' });
       const obsHandles = `<div data-resize="n" draggable="false" style="position:absolute;top:-3px;left:0;width:100%;height:6px;cursor:ns-resize;z-index:10;pointer-events:auto"></div>
         <div data-resize="w" draggable="false" style="position:absolute;left:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10;pointer-events:auto"></div>
         <div data-resize="e" draggable="false" style="position:absolute;right:-3px;top:0;width:6px;height:100%;cursor:ew-resize;z-index:10;pointer-events:auto"></div>
@@ -248,20 +248,14 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
         style="${cssStr(obsSt)}">
         ${obsHandles}
         <div data-rg-id="observaciones" class="${cls('section', 'observaciones')}" style="${cssStr(obsInnerSt)}">
-          <table width="100%" height="100%" cellPadding="0" cellSpacing="0" border="0">
-            <tr><td style="border:1px solid ${s.colorBorder};border-radius:5px;height:100%;box-sizing:border-box">
-              <table width="100%" height="100%" cellPadding="0" cellSpacing="0" border="0">
-                <tr>
-                  <td width="30%" style="text-align:right;font-weight:bold;padding:4px">Valor en Letras:</td>
-                  <td style="padding:4px">${xmlData?.inWords || '[Valor en Letras]'}</td>
-                </tr>
-                <tr>
-                  <td width="30%" style="text-align:right;font-weight:bold;padding:4px">Condición de la Operación:</td>
-                  <td style="padding:4px">Contado</td>
-                </tr>
-              </table>
-            </td></tr>
-          </table>
+          <div style="border:1px solid ${s.colorBorder};border-radius:5px;height:100%;box-sizing:border-box;display:flex;flex-direction:column">
+            <div style="flex:1;padding:4px">
+              <span style="font-weight:bold">Valor en Letras:&nbsp;</span>${xmlData?.inWords || '[Valor en Letras]'}
+            </div>
+            <div style="padding:4px">
+              <span style="font-weight:bold">Condición de la Operación:&nbsp;</span>Contado
+            </div>
+          </div>
         </div>
       </div>`;
     }

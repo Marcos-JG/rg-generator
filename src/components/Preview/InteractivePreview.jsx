@@ -145,7 +145,7 @@ export default function InteractivePreview() {
         ref={containerRef}
         className="bg-white shadow-lg"
         data-preview-content
-        style={{ width: '8in', margin: '0 auto', padding: '0.25in', minHeight: '1056px', cursor: 'default' }}
+        style={{ width: '8.5in', margin: '0 auto', padding: '0.25in', minHeight: '1056px', cursor: 'default' }}
         dangerouslySetInnerHTML={{ __html: html }}
         onClick={handleContainerClick}
         onDoubleClick={onDblClick}

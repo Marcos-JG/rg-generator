@@ -12,7 +12,7 @@ const BASE_TEMPLATE = `<?xml version="1.0" encoding="UTF-8"?>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: {{FONT_FAMILY}}; font-size: {{FONT_SIZE}}; }
-          .page { width: 100%; padding: 15px; }
+          .page { width: 8.5in; margin: 0 auto; padding: 0.25in; box-sizing: border-box; }
           .header { text-align: center; border-bottom: 2px solid {{COLOR_PRIMARY}}; padding-bottom: 10px; margin-bottom: 15px; }
           .doc-type { color: {{COLOR_PRIMARY}}; font-weight: bold; font-size: 14pt; margin: 5px 0; }
           .section { margin-bottom: 15px; }
