@@ -25,7 +25,7 @@
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: {{FONT_FAMILY}}; font-size: {{FONT_SIZE}}; color: {{COLOR_FONT}}; padding: 0; margin: 0; text-align: left; }
-          .page { width: 8.5in; margin: 0 auto; padding: 0.25in; background: white; }
+          .page { width: 8.5in; height: 11in; margin: 0 auto; padding: 0.25in; background: white; position: relative; overflow: hidden; box-sizing: border-box; }
           td { vertical-align: top; padding: 2px 4px; border-color: #808080; }
 
           .header { margin-bottom: 15px; }

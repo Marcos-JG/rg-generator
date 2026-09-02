@@ -27,7 +27,13 @@ export default function useResize(containerRef, setOverrides, renderKey, setRend
       });
       handle.style.pointerEvents = 'auto';
 
-      state.current = { dir, rgId, startX: e.clientX, startY: e.clientY, startW: rect.width, startH: rect.height, el: section };
+      state.current = {
+        dir, rgId, startX: e.clientX, startY: e.clientY,
+        startW: rect.width, startH: rect.height,
+        offLeft: section.offsetLeft, offTop: section.offsetTop,
+        maxW: el.clientWidth, maxH: el.clientHeight,
+        el: section,
+      };
 
       if (dir === 'e' || dir === 'w') document.body.style.cursor = 'ew-resize';
       else if (dir === 'h' || dir === 'n') document.body.style.cursor = 'ns-resize';
@@ -40,14 +46,28 @@ export default function useResize(containerRef, setOverrides, renderKey, setRend
       if (!state.current) return;
       e.preventDefault();
 
-      const { dir, startX, startY, startW, startH, el: sectionEl } = state.current;
+      const { dir, startX, startY, startW, startH, offLeft, offTop, maxW, maxH, el: sectionEl } = state.current;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
 
-      if (dir === 'e' || dir === 'he') sectionEl.style.width = Math.max(50, startW + dx) + 'px';
-      if (dir === 'w') sectionEl.style.width = Math.max(50, startW - dx) + 'px';
-      if (dir === 'h' || dir === 'he') sectionEl.style.height = Math.max(20, startH + dy) + 'px';
-      if (dir === 'n') sectionEl.style.height = Math.max(20, startH - dy) + 'px';
+      const clamp = (v, min, max) => Math.min(Math.max(v, min), Math.max(min, max));
+
+      if (dir === 'e' || dir === 'he') {
+        const w = clamp(startW + dx, 50, maxW - offLeft);
+        sectionEl.style.width = w + 'px';
+      }
+      if (dir === 'w') {
+        const w = clamp(startW - dx, 50, offLeft + startW);
+        sectionEl.style.width = w + 'px';
+      }
+      if (dir === 'h' || dir === 'he') {
+        const h = clamp(startH + dy, 20, maxH - offTop);
+        sectionEl.style.height = h + 'px';
+      }
+      if (dir === 'n') {
+        const h = clamp(startH - dy, 20, offTop + startH);
+        sectionEl.style.height = h + 'px';
+      }
 
       sectionEl.style.flex = 'none';
     };
