@@ -8,6 +8,7 @@ const NON_SELECTABLE_IDS = new Set([
   'grid-row-0', 'grid-row-1', 'grid-row-2', 'grid-row-3', 'grid-row-4', 'grid-row-5',
   'header-row-0', 'header-row-1', 'header-row-2',
   'section-emisor', 'section-receptor', 'section-items', 'section-totals', 'section-observaciones', 'section-footer',
+  'section-datos-adicionales',
   'section-header-logo', 'section-header-ids', 'section-header-qr', 'section-header-info',
 ]);
 

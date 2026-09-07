@@ -31,6 +31,15 @@ export default function StylePanel({ selected, overrides, updateStyle, onClose, 
         <Row label="Padding">
           <PxInput value={ov.padding} onChange={(v) => updateStyle('padding', v)} />
         </Row>
+        <Row label="Separación X (dato)">
+          <PxInput value={ov.separationX} onChange={(v) => updateStyle('separationX', v)} placeholders={[0, 4, 8, 12]} />
+        </Row>
+        <Row label="Separación Arriba">
+          <PxInput value={ov.marginTop} onChange={(v) => updateStyle('marginTop', v)} placeholders={[0, 2, 4, 8]} />
+        </Row>
+        <Row label="Separación Abajo">
+          <PxInput value={ov.marginBottom} onChange={(v) => updateStyle('marginBottom', v)} placeholders={[0, 2, 4, 8]} />
+        </Row>
         <Row label="Borde (radio)">
           <PxInput value={ov.borderRadius} onChange={(v) => updateStyle('borderRadius', v)} placeholders={[0, 6, 10, 15]} />
         </Row>
@@ -52,12 +61,6 @@ export default function StylePanel({ selected, overrides, updateStyle, onClose, 
         </Row>
         <Row label="Alto">
           <SizeInput value={ov.height} onChange={(v) => updateStyle('height', v)} />
-        </Row>
-        <Row label="Margen Sup">
-          <PxInput value={ov.marginTop} onChange={(v) => updateStyle('marginTop', v)} />
-        </Row>
-        <Row label="Margen Inf">
-          <PxInput value={ov.marginBottom} onChange={(v) => updateStyle('marginBottom', v)} />
         </Row>
       </div>
       <p className="text-[10px] text-gray-400 p-3 border-t">Doble clic para editar texto inline</p>

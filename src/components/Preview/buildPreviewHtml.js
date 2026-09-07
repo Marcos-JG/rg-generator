@@ -27,18 +27,54 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
   let colCounter = 0;
   const nextColId = () => `col-${colCounter++}`;
 
-  const tdLabel = (rid, label) => {
-    const st = buildWithOverrides(rid, { fontWeight: 'bold', width: '35%', whiteSpace: 'nowrap', padding: '2px 4px' });
-    return `<td style="${cssStr(st)}">${label}</td>`;
+  const sectionVerticalSpacing = (rid, sectionKey) => {
+    const self = overrides[rid] || {};
+    const section = overrides[sectionKey] || {};
+    const mTop = self.marginTop || section.marginTop;
+    const mBottom = self.marginBottom || section.marginBottom;
+    const gapX = self.separationX || section.separationX;
+    return {
+      paddingTop: mTop,
+      paddingBottom: mBottom,
+      gapX,
+    };
   };
-  const tdVal = (rid, val) => {
+
+  const labelWidthFor = (rid) => {
+    let sectionKey;
+    if (rid.startsWith('seller-')) sectionKey = 'section-emisor';
+    else if (rid.startsWith('buyer-')) sectionKey = 'section-receptor';
+    else if (rid.startsWith('total-')) sectionKey = 'section-totals';
+    else sectionKey = 'section-datos-adicionales';
+    return overrides[sectionKey]?.labelWidth || '35%';
+  };
+
+  const tdLabel = (rid, label, sp) => {
+    const st = buildWithOverrides(rid, { fontWeight: 'bold', width: labelWidthFor(rid), whiteSpace: 'nowrap', padding: '2px 4px' });
+    delete st.marginTop;
+    delete st.marginBottom;
+    delete st.separationX;
+    if (sp?.paddingTop) st.paddingTop = sp.paddingTop;
+    if (sp?.paddingBottom) st.paddingBottom = sp.paddingBottom;
+    const colHandle = `<div class="col-resize-handle" data-label-resize="1"></div>`;
+    return `<td style="position:relative;${cssStr(st)}">${label}${colHandle}</td>`;
+  };
+  const tdVal = (rid, val, sp) => {
     const st = buildWithOverrides(`${rid}-val`, { padding: '2px 4px' });
+    delete st.marginTop;
+    delete st.marginBottom;
+    delete st.separationX;
+    if (sp?.paddingTop) st.paddingTop = sp.paddingTop;
+    if (sp?.paddingBottom) st.paddingBottom = sp.paddingBottom;
+    if (sp?.gapX) st.paddingLeft = sp.gapX;
     return `<td style="${cssStr(st)}">${val}</td>`;
   };
 
   const mkRow = (rid, label, val) => {
     if (!val) return '';
-    return `<tr data-rg-id="${rid}" data-field-id="${rid}" draggable="true" class="field-draggable">${tdLabel(rid, label)}${tdVal(rid, val)}</tr>`;
+    const sectionKey = rid.startsWith('seller-') ? 'emisor' : rid.startsWith('buyer-') ? 'receptor' : null;
+    const sp = sectionKey ? sectionVerticalSpacing(rid, sectionKey) : null;
+    return `<tr data-rg-id="${rid}" data-field-id="${rid}" draggable="true" class="field-draggable">${tdLabel(rid, label, sp)}${tdVal(rid, val, sp)}</tr>`;
   };
 
   const emisorFieldOrder = currentConfig.fieldOrders?.seller || ['seller-name', 'seller-nit', 'seller-nrc', 'seller-actividad', 'seller-address', 'seller-phone', 'seller-email', 'seller-nombre-comercial', 'seller-tipo-establecimiento'];
@@ -124,9 +160,13 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     const bgStyle = isPagar
       ? `background-color:${s.colorTotalPagarBg};font-weight:bold;font-size:110%`
       : `background-color:${s.colorTotalesBg};font-weight:bold`;
-    return `<tr data-rg-id="${rid}" data-field-id="${rid}" draggable="true" class="field-draggable ${cls(isPagar ? 'total-pagar' : 'total-row', rid)}" style="${bgStyle}">
-      <td style="${cssStr(st)}">${field.label}</td>
-      <td style="${cssStr(st)};text-align:right">${val || '0.00'}</td>
+    const rowHandle = `<div data-resize="row" style="position:absolute;left:0;right:0;bottom:-4px;height:7px;z-index:30;cursor:ns-resize;pointer-events:auto"></div>`;
+    const labelColHandle = `<div class="col-resize-handle" data-label-resize="1"></div>`;
+    const labelStyle = `position:relative;width:${labelWidthFor(rid)};${cssStr(st)}`;
+    const valStyle = `${cssStr(st)};text-align:right`;
+    return `<tr data-rg-id="${rid}" data-field-id="${rid}" draggable="true" class="field-draggable ${cls(isPagar ? 'total-pagar' : 'total-row', rid)}" style="position:relative;${bgStyle}">
+      <td style="${labelStyle}">${field.label}${labelColHandle}${rowHandle}</td>
+      <td style="${valStyle}">${val || '0.00'}</td>
     </tr>`;
   };
 
@@ -176,7 +216,12 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
   const renderSection = (sec) => {
     if (sec === 'emisor') {
       const emisorSt = buildWithOverrides('section-emisor', sectionOuterStyle());
-      const emisorInnerSt = buildWithOverrides('emisor', { height: '100%', width: '100%', boxSizing: 'border-box' });
+      const emisorInnerMerged = buildWithOverrides('emisor', { height: '100%', width: '100%', boxSizing: 'border-box' });
+      delete emisorInnerMerged.marginTop;
+      delete emisorInnerMerged.marginBottom;
+      delete emisorInnerMerged.separationX;
+      delete emisorInnerMerged.separationY;
+      const emisorInnerSt = emisorInnerMerged;
       const emisorHandles = sectionHandles();
       return `<div data-rg-id="section-emisor" data-drag-section="emisor" class="${cls('section', 'section-emisor')}" draggable="true"
         style="${cssStr(emisorSt)}">
@@ -191,7 +236,12 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     }
     if (sec === 'receptor') {
       const receptorSt = buildWithOverrides('section-receptor', sectionOuterStyle());
-      const receptorInnerSt = buildWithOverrides('receptor', { height: '100%', width: '100%', boxSizing: 'border-box' });
+      const receptorInnerMerged = buildWithOverrides('receptor', { height: '100%', width: '100%', boxSizing: 'border-box' });
+      delete receptorInnerMerged.marginTop;
+      delete receptorInnerMerged.marginBottom;
+      delete receptorInnerMerged.separationX;
+      delete receptorInnerMerged.separationY;
+      const receptorInnerSt = receptorInnerMerged;
       const receptorHandles = sectionHandles();
       return `<div data-rg-id="section-receptor" data-drag-section="receptor" class="${cls('section', 'section-receptor')}" draggable="true"
         style="${cssStr(receptorSt)}">
@@ -210,7 +260,7 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
       return `<div data-rg-id="section-items" data-drag-section="items" class="${cls('section', 'section-items')}" draggable="true"
         style="${cssStr(itemsSt)}">
         ${itemsHandles}
-        <table data-rg-id="table-items" class="${cls('items-table', 'table-items')}" style="width:100%;border-collapse:collapse">
+        <table data-rg-id="table-items" class="${cls('items-table', 'table-items')}" style="width:100%;height:100%;border-collapse:collapse">
           <thead><tr>${itemHdrs}</tr></thead>
           <tbody>${makeItemRows()}</tbody>
         </table>
@@ -232,49 +282,130 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     }
     if (sec === 'observaciones') {
       const obsSt = buildWithOverrides('section-observaciones', sectionOuterStyle());
-      const obsInnerSt = buildWithOverrides('observaciones', { height: '100%', width: '100%', boxSizing: 'border-box' });
+      const obsInnerMerged = buildWithOverrides('observaciones', { height: '100%', width: '100%', boxSizing: 'border-box' });
+      delete obsInnerMerged.marginTop;
+      delete obsInnerMerged.marginBottom;
+      delete obsInnerMerged.separationX;
+      delete obsInnerMerged.separationY;
+      const obsInnerSt = obsInnerMerged;
       const obsHandles = sectionHandles();
+      const obsAlign = overrides['observaciones']?.textAlign;
+      const obsAlignCss = obsAlign ? `text-align:${obsAlign};` : '';
+      const obsFields = [
+        { id: 'VALOR_EN_LETRAS', label: 'Valor en Letras' },
+        { id: 'CONDICION_OPERACION', label: 'Condición de la Operación' },
+        { id: 'FORMA_DE_PAGO', label: 'Forma de Pago' },
+      ];
+      const obsOrder = (currentConfig.fieldOrders?.observaciones || obsFields.map((f) => `obs-${f.id}`))
+        .map((id) => id.replace(/^obs-/, ''));
+      const obsById = {};
+      obsFields.forEach((f) => { obsById[f.id] = f; });
+      const orderedObs = obsOrder.map((id) => obsById[id]).filter(Boolean);
+      const sectionOv = overrides['observaciones'] || {};
+      const sectionMarginTop = sectionOv.marginTop;
+      const sectionMarginBottom = sectionOv.marginBottom;
+      const sectionSepX = sectionOv.separationX;
+      const obsRow = (field) => {
+        const rid = `obs-${field.id}`;
+        const fieldOv = overrides[rid] || {};
+        const fieldAlign = fieldOv.textAlign || obsAlign || 'left';
+        const gapX = fieldOv.separationX || sectionSepX;
+        const mTop = fieldOv.marginTop || sectionMarginTop;
+        const mBottom = fieldOv.marginBottom || sectionMarginBottom;
+        let val;
+        if (field.id === 'VALOR_EN_LETRAS') {
+          val = xmlData?.inWords || '[Valor en Letras]';
+        } else if (field.id === 'CONDICION_OPERACION') {
+          val = xmlData?.condicionOperacion || '[Condición de la Operación]';
+        } else if (field.id === 'FORMA_DE_PAGO') {
+          const pmts = xmlData?.payments || [];
+          val = pmts.length
+            ? pmts.map((p) => `${p.label}${p.amount && p.amount !== '0.00' ? ' (' + p.amount + ')' : ''}`).join(', ')
+            : '[Forma de Pago]';
+        }
+        const alignCss = fieldAlign === 'center' ? 'justify-content:center;text-align:center;' : fieldAlign === 'right' ? 'justify-content:flex-end;text-align:right;' : 'justify-content:flex-start;text-align:left;';
+        const rowHandle = `<div data-resize="row" style="position:absolute;left:0;right:0;bottom:-4px;height:7px;z-index:30;cursor:ns-resize;pointer-events:auto"></div>`;
+        const rowPadTop = fieldOv.paddingTop ? 'padding-top:' + fieldOv.paddingTop + ';' : '';
+        const rowPadBottom = fieldOv.paddingBottom ? 'padding-bottom:' + fieldOv.paddingBottom + ';' : '';
+        return `<div data-rg-id="${rid}" data-field-id="${rid}" class="field-draggable" draggable="true"
+          style="position:relative;display:flex;${alignCss}padding:2px 4px;${gapX ? 'gap:' + gapX + ';' : ''}${mTop ? 'margin-top:' + mTop + ';' : ''}${mBottom ? 'margin-bottom:' + mBottom + ';' : ''}${rowPadTop}${rowPadBottom}flex-wrap:wrap;align-items:baseline">
+          ${rowHandle}
+          <span style="font-weight:bold;white-space:nowrap;flex-shrink:0">${field.label}:&nbsp;</span>
+          <span style="min-width:0">${val}</span>
+        </div>`;
+      };
+      const justify = obsAlign === 'center' ? 'center' : obsAlign === 'right' ? 'flex-end' : 'flex-start';
       return `<div data-rg-id="section-observaciones" data-drag-section="observaciones" class="${cls('section', 'section-observaciones')}" draggable="true"
         style="${cssStr(obsSt)}">
         ${obsHandles}
         <div data-rg-id="observaciones" class="${cls('section', 'observaciones')}" style="${cssStr(obsInnerSt)}">
-          <div style="border:1px solid ${s.colorBorder};border-radius:5px;height:100%;box-sizing:border-box;display:flex;flex-direction:column">
-            <div style="flex:1;padding:4px">
-              <span style="font-weight:bold">Valor en Letras:&nbsp;</span>${xmlData?.inWords || '[Valor en Letras]'}
-            </div>
-            <div style="padding:4px">
-              <span style="font-weight:bold">Condición de la Operación:&nbsp;</span>${xmlData?.condicionOperacion || '[Condición de la Operación]'}
-            </div>
-            ${(xmlData?.payments || []).map((p) => `
-              <div style="padding:4px">
-                <span style="font-weight:bold">Forma de Pago:&nbsp;</span>${p.label}${p.amount && p.amount !== '0.00' ? ` (${p.amount})` : ''}
-              </div>
-            `).join('')}
+          <div style="border:1px solid ${s.colorBorder};border-radius:5px;height:100%;box-sizing:border-box;display:flex;flex-direction:column;justify-content:${justify};${obsAlignCss}">
+            ${orderedObs.map((f) => obsRow(f)).join('')}
           </div>
         </div>
       </div>`;
     }
     if (sec === 'datos-adicionales') {
       const daSt = buildWithOverrides('section-datos-adicionales', sectionOuterStyle());
-      const daInnerSt = buildWithOverrides('datos-adicionales', { height: '100%', width: '100%', boxSizing: 'border-box' });
+      const daInnerMerged = buildWithOverrides('datos-adicionales', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' });
+      delete daInnerMerged.marginTop;
+      delete daInnerMerged.marginBottom;
+      delete daInnerMerged.separationX;
+      delete daInnerMerged.separationY;
+      const daInnerSt = daInnerMerged;
       const daHandles = sectionHandles();
-      const daRow = (label) => `<tr data-rg-id="da-${label}" data-field-id="da-${label}" class="field-draggable" draggable="true">
-        <td style="font-weight:bold;white-space:nowrap;padding:2px 4px;width:35%">${label}:&nbsp;</td>
-        <td style="padding:2px 4px">${xmlData?.adenda?.[label] || `[${label}]`}</td>
+      const daAlign = overrides['datos-adicionales']?.textAlign;
+      const daBoxAlign = daAlign ? `text-align:${daAlign};` : '';
+      const daGap = overrides['datos-adicionales']?.gap ? `gap:${overrides['datos-adicionales'].gap};` : '';
+      const adendaFields = currentConfig.adendaFields?.length
+        ? currentConfig.adendaFields
+        : (xmlData?.adendaDefaults || []);
+      if (!adendaFields.length) return '';
+      const daFields = adendaFields.map((f) => {
+        if (!f) return null;
+        const name = f.id || f.name;
+        return { field: f, name };
+      }).filter(Boolean);
+      const adendaOrder = (currentConfig.fieldOrders?.['datos-adicionales'] || daFields.map((f) => `da-${f.name}`))
+        .map((id) => id.replace(/^da-/, ''));
+      const idToField = {};
+      daFields.forEach((f) => { idToField[f.name] = f; });
+      const orderedDaFields = adendaOrder.map((name) => idToField[name]).filter(Boolean);
+      const daRow = (field) => {
+        const label = field.label || field.name || field.id;
+        const name = field.name;
+        const rid = `da-${name}`;
+        const alignOv = overrides[rid] || {};
+        const alignVal = alignOv.textAlign;
+        const daSecOv = overrides['datos-adicionales'] || {};
+        const padTop = alignOv.marginTop || daSecOv.marginTop;
+        const padBottom = alignOv.marginBottom || daSecOv.marginBottom;
+        const gapX = alignOv.separationX || daSecOv.separationX;
+        const labelSt = { fontWeight: 'bold', whiteSpace: 'nowrap', padding: '2px 4px', width: labelWidthFor(rid) };
+        const valSt = { padding: '2px 4px' };
+        if (padTop) { labelSt.paddingTop = padTop; valSt.paddingTop = padTop; }
+        if (padBottom) { labelSt.paddingBottom = padBottom; valSt.paddingBottom = padBottom; }
+        if (gapX) valSt.paddingLeft = gapX;
+        const labelOv = buildWithOverrides(rid, labelSt);
+        delete labelOv.marginTop; delete labelOv.marginBottom; delete labelOv.separationX;
+        const labelCss = cssStr({ ...labelOv, ...(alignVal ? { textAlign: alignVal } : {}) });
+        const valOv = buildWithOverrides(`${rid}-val`, valSt);
+        delete valOv.marginTop; delete valOv.marginBottom; delete valOv.separationX;
+        const valCss = cssStr({ ...valOv, ...(alignVal ? { textAlign: alignVal } : {}) });
+        const daColHandle = `<div class="col-resize-handle" data-label-resize="1"></div>`;
+        return `<tr data-rg-id="${rid}" data-field-id="${rid}" class="field-draggable" draggable="true">
+        <td style="position:relative;${labelCss}">${label}:&nbsp;${daColHandle}</td>
+        <td style="${valCss}">${xmlData?.adenda?.[name] || `[${label}]`}</td>
       </tr>`;
+      };
       return `<div data-rg-id="section-datos-adicionales" data-drag-section="datos-adicionales" class="${cls('section', 'section-datos-adicionales')}" draggable="true"
         style="${cssStr(daSt)}">
         ${daHandles}
         <div data-rg-id="datos-adicionales" class="${cls('section', 'datos-adicionales')}" style="${cssStr(daInnerSt)}">
-          <div style="border:1px solid ${s.colorBorder};border-radius:5px;height:100%;box-sizing:border-box;padding:4px">
+          <div style="border:1px solid ${s.colorBorder};border-radius:5px;height:100%;box-sizing:border-box;display:flex;flex-direction:column;padding:4px;${daBoxAlign}${daGap}">
             <table width="100%" cellPadding="0" cellSpacing="0" border="0">
               <tbody>
-                ${daRow('REFERENCIA_INTERNA')}
-                ${daRow('CodigoCliente')}
-                ${daRow('Num_OrdenCompra')}
-                ${daRow('CondicionPago')}
-                ${daRow('NRC_COF')}
-                ${daRow('FechaVencimiento')}
+                ${orderedDaFields.map((f) => daRow(f)).join('')}
               </tbody>
             </table>
           </div>
@@ -301,7 +432,7 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
 
   const gridHtml = layoutGrid.map((row, rowIdx) => {
     const cellsHtml = row.map(sec => renderSection(sec)).join('');
-    return `<div data-rg-id="grid-row-${rowIdx}" style="display:flex;gap:8px;margin-bottom:15px;align-items:flex-start">${cellsHtml}</div>`;
+    return `<div data-rg-id="grid-row-${rowIdx}" style="display:flex;gap:8px;margin-bottom:15px;align-items:flex-start;overflow:hidden">${cellsHtml}</div>`;
   }).join('');
 
   const renderHeaderSection = (sec) => {

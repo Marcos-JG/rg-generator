@@ -107,6 +107,17 @@ const BASE_TEMPLATE = `<?xml version="1.0" encoding="UTF-8"?>
               </xsl:for-each>
             </table>
           </div>
+          <div class="observaciones" style="margin-top:10px">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="border:1px solid {{COLOR_BORDER}};border-radius:5px;padding:4px">
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    {{OBSERVACIONES_FIELDS}}
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </div>
           <div class="footer">{{FOOTER_TEXT}}</div>
         </div>
       </body>

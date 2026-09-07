@@ -18,9 +18,11 @@ export default function InteractivePreview() {
 
   const saveSnapshot = (snapStr) => snap(snapStr);
 
-  useFieldDrag(containerRef, renderKey, setRenderKey);
-  useResize(containerRef, setOverrides, renderKey, setRenderKey);
-  useColumnResize(containerRef, setOverrides, renderKey, setRenderKey);
+  const active = Boolean(xmlString && currentConfig);
+
+  useFieldDrag(containerRef, renderKey, setRenderKey, active);
+  useResize(containerRef, overrides, setOverrides, renderKey, setRenderKey, active);
+  useColumnResize(containerRef, setOverrides, renderKey, setRenderKey, active);
 
   const {
     hovered, selected, setSelected,
@@ -98,7 +100,7 @@ export default function InteractivePreview() {
         }
         .rg-hover { outline: 2px dashed rgba(59,130,246,0.6) !important; outline-offset: 2px; }
         .rg-sel { outline: 2.5px solid #3b82f6 !important; outline-offset: 2px; }
-        .col-resize-handle { position:absolute; top:0; right:-3px; width:6px; height:100%; cursor:col-resize; z-index:10; }
+        .col-resize-handle { position:absolute; top:0; right:0; width:6px; height:100%; cursor:col-resize; z-index:10; pointer-events:auto; }
         .col-resize-handle:hover { background:rgba(59,130,246,0.4); }
         [data-preview-content] th { position:relative; }
         [data-preview-content] .field-draggable { cursor: grab; }

@@ -8,6 +8,7 @@ import ColumnConfig from './components/ConfigPanel/ColumnConfig';
 import LayoutConfig from './components/ConfigPanel/LayoutConfig';
 import StyleConfig from './components/ConfigPanel/StyleConfig';
 import FooterConfig from './components/ConfigPanel/FooterConfig';
+import AdendaConfig from './components/ConfigPanel/AdendaConfig';
 import InteractivePreview from './components/Preview/InteractivePreview';
 import DownloadButton from './components/Preview/DownloadButton';
 import { useConfigStore } from './stores/configStore';
@@ -28,6 +29,7 @@ export default function App() {
           <ColumnConfig />
           <LayoutConfig />
           <StyleConfig />
+          <AdendaConfig />
           <FooterConfig />
         </Sidebar>
 

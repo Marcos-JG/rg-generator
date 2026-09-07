@@ -175,6 +175,88 @@ function generateTotalsXslt(config) {
   return htmlRows + '\n' + pagarRow;
 }
 
+function generateAdendaXslt(config) {
+  const fields = config.adendaFields || [];
+  if (!fields.length) return '';
+
+  const order = (config.fieldOrders?.['datos-adicionales'] || fields.map((f) => `da-${f.id || f.name}`)).map(
+    (id) => id.replace(/^da-/, '')
+  );
+  const byName = {};
+  fields.forEach((f) => {
+    const name = f.id || f.name;
+    if (name) byName[name] = f;
+  });
+
+  return order
+    .map((name) => {
+      const f = byName[name];
+      if (!f) return '';
+      const label = f.label || f.name || name;
+      const xpath = `Root/AdditionalDocumentInfo/AdditionalInfo/AditionalData/Data/Info[@Name='${name}']/@Value`;
+      return `                    <tr>
+                      <td width="20%" style="text-align:right;font-weight:bold;padding:4px">${escapeXml(label)}:</td>
+                      <td style="padding:4px"><xsl:value-of select="${xpath}"/></td>
+                    </tr>`;
+    })
+    .filter(Boolean)
+    .join('\n');
+}
+
+function generateObservacionesXslt(config) {
+  const order = (config.fieldOrders?.observaciones || ['obs-VALOR_EN_LETRAS', 'obs-CONDICION_OPERACION', 'obs-FORMA_DE_PAGO'])
+    .map((id) => id.replace(/^obs-/, ''));
+
+  const PAYMENT_XSLT = `<xsl:for-each select="Root/Payments/Payment">
+                    <tr>
+                      <td style="font-weight:bold;width:35%;white-space:nowrap;padding:2px 4px;">Forma de Pago:</td>
+                      <td style="padding:2px 4px;">
+                        <xsl:choose>
+                          <xsl:when test="Code = '01'">Billetes y monedas</xsl:when>
+                          <xsl:when test="Code = '02'">Tarjeta Débito</xsl:when>
+                          <xsl:when test="Code = '03'">Tarjeta Crédito</xsl:when>
+                          <xsl:when test="Code = '04'">Cheque</xsl:when>
+                          <xsl:when test="Code = '05'">Transferencia-Depósito Bancario</xsl:when>
+                          <xsl:when test="Code = '08'">Dinero electrónico</xsl:when>
+                          <xsl:when test="Code = '09'">Monedero electrónico</xsl:when>
+                          <xsl:when test="Code = '11'">Bitcoin</xsl:when>
+                          <xsl:when test="Code = '12'">Otras Criptomonedas</xsl:when>
+                          <xsl:when test="Code = '13'">Cuentas por pagar del receptor</xsl:when>
+                          <xsl:when test="Code = '14'">Giro bancario</xsl:when>
+                          <xsl:otherwise>Otros</xsl:otherwise>
+                        </xsl:choose>
+                        <xsl:text> </xsl:text><xsl:value-of select="Amount"/>
+                      </td>
+                    </tr>
+                  </xsl:for-each>`;
+
+  return order.map((id) => {
+    if (id === 'VALOR_EN_LETRAS') {
+      return `                    <tr>
+                      <td style="font-weight:bold;width:35%;white-space:nowrap;padding:2px 4px;">Valor en Letras:</td>
+                      <td style="padding:2px 4px"><xsl:value-of select="InWords"/></td>
+                    </tr>`;
+    }
+    if (id === 'CONDICION_OPERACION') {
+      return `                    <tr>
+                      <td style="font-weight:bold;width:35%;white-space:nowrap;padding:2px 4px;">Condición de la Operación:</td>
+                      <td style="padding:2px 4px">
+                        <xsl:choose>
+                          <xsl:when test="Root/Totals/AdditionalInfo/Info[@Name='CondicionOperacion']/@Value = '1'">Contado</xsl:when>
+                          <xsl:when test="Root/Totals/AdditionalInfo/Info[@Name='CondicionOperacion']/@Value = '2'">A Crédito</xsl:when>
+                          <xsl:when test="Root/Totals/AdditionalInfo/Info[@Name='CondicionOperacion']/@Value = '3'">Otro</xsl:when>
+                          <xsl:otherwise>[Condición de la Operación]</xsl:otherwise>
+                        </xsl:choose>
+                      </td>
+                    </tr>`;
+    }
+    if (id === 'FORMA_DE_PAGO') {
+      return PAYMENT_XSLT;
+    }
+    return '';
+  }).join('\n');
+}
+
 export function generateXslt(baseTemplate, config, userStyle = {}, xmlData = null) {
   let xslt = baseTemplate;
   const style = { ...config.style, ...userStyle };
@@ -214,11 +296,20 @@ export function generateXslt(baseTemplate, config, userStyle = {}, xmlData = nul
   xslt = replaceAllPlaceholders(xslt, 'COL2_TITLE', escapeXml(col2Title));
   xslt = replaceAllPlaceholders(xslt, 'COL2_FIELDS', col2Fields);
 
+  xslt = replaceAllPlaceholders(xslt, 'SELLER_FIELDS', sellerXslt);
+  xslt = replaceAllPlaceholders(xslt, 'BUYER_FIELDS', buyerXslt);
+
   const columnsXslt = generateColumnsXslt(config.itemColumns);
   xslt = replaceAllPlaceholders(xslt, 'ITEM_COLUMNS', columnsXslt);
 
   const itemRowXslt = generateItemRowXslt(config.itemColumns);
   xslt = replaceAllPlaceholders(xslt, 'ITEM_ROWS', itemRowXslt);
+
+  const adendaXslt = generateAdendaXslt(config);
+  xslt = replaceAllPlaceholders(xslt, 'ADENDA_FIELDS', adendaXslt);
+
+  const observacionesXslt = generateObservacionesXslt(config);
+  xslt = replaceAllPlaceholders(xslt, 'OBSERVACIONES_FIELDS', observacionesXslt);
 
   const totalsXslt = generateTotalsXslt(config);
   xslt = replaceAllPlaceholders(xslt, 'TOTALS_ROWS', totalsXslt);

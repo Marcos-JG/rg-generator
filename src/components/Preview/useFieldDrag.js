@@ -2,9 +2,10 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useConfigStore } from '../../stores/configStore';
 
 const DEFAULT_SELLER_ORDER = ['seller-name', 'seller-nit', 'seller-nrc', 'seller-actividad', 'seller-address', 'seller-phone', 'seller-email', 'seller-nombre-comercial', 'seller-tipo-establecimiento'];
-const DEFAULT_BUYER_ORDER = ['buyer-name', 'buyer-nit', 'buyer-nrc', 'buyer-address', 'buyer-email'];
+const DEFAULT_BUYER_ORDER = ['buyer-name', 'buyer-taxidtype', 'buyer-nit', 'buyer-nrc', 'buyer-address', 'buyer-email'];
+const DEFAULT_OBS_ORDER = ['obs-VALOR_EN_LETRAS', 'obs-CONDICION_OPERACION', 'obs-FORMA_DE_PAGO'];
 
-export default function useFieldDrag(containerRef, renderKey, setRenderKey) {
+export default function useFieldDrag(containerRef, renderKey, setRenderKey, active) {
   const currentConfig = useConfigStore((s) => s.currentConfig);
   const setCurrentConfig = useConfigStore((s) => s.setCurrentConfig);
   const dragData = useRef(null);
@@ -12,7 +13,7 @@ export default function useFieldDrag(containerRef, renderKey, setRenderKey) {
   const findDraggableParent = useCallback((el) => {
     let cur = el;
     while (cur && cur.tagName !== 'BODY') {
-      if ((cur.tagName === 'TR' || cur.tagName === 'TH') && cur.hasAttribute('data-field-id')) {
+      if ((cur.tagName === 'TR' || cur.tagName === 'TH' || cur.tagName === 'DIV') && cur.hasAttribute('data-field-id')) {
         return cur;
       }
       cur = cur.parentElement;
@@ -46,6 +47,15 @@ export default function useFieldDrag(containerRef, renderKey, setRenderKey) {
     if (section === 'totals') {
       return fieldOrders.totals || currentConfig.totalsFields.map(f => `total-${f.id}`);
     }
+    if (section === 'datos-adicionales') {
+      const fields = currentConfig.adendaFields?.length
+        ? currentConfig.adendaFields
+        : (currentConfig.adendaDefaults || []);
+      return fieldOrders['datos-adicionales'] || fields.map(f => `da-${f.id || f.name}`);
+    }
+    if (section === 'observaciones') {
+      return fieldOrders.observaciones || DEFAULT_OBS_ORDER;
+    }
     return [];
   }, [currentConfig]);
 
@@ -56,6 +66,8 @@ export default function useFieldDrag(containerRef, renderKey, setRenderKey) {
     else if (section === 'buyer' || section === 'receptor') fieldOrders.buyer = newOrder;
     else if (section === 'items') fieldOrders.items = newOrder;
     else if (section === 'totals') fieldOrders.totals = newOrder;
+    else if (section === 'datos-adicionales') fieldOrders['datos-adicionales'] = newOrder;
+    else if (section === 'observaciones') fieldOrders.observaciones = newOrder;
 
     setCurrentConfig({ ...currentConfig, fieldOrders });
     setRenderKey(k => k + 1);
@@ -63,7 +75,7 @@ export default function useFieldDrag(containerRef, renderKey, setRenderKey) {
 
   useEffect(() => {
     const el = containerRef.current;
-    if (!el) return;
+    if (!el || !active) return;
 
     const onDragStart = (e) => {
       const fieldEl = findDraggableParent(e.target);
@@ -157,5 +169,5 @@ export default function useFieldDrag(containerRef, renderKey, setRenderKey) {
       el.removeEventListener('drop', onDrop);
       el.removeEventListener('dragend', onDragEnd);
     };
-  }, [containerRef, findDraggableParent, findSection, getOrderedFields, updateFieldOrder, renderKey]);
+  }, [containerRef, findDraggableParent, findSection, getOrderedFields, updateFieldOrder, renderKey, active]);
 }

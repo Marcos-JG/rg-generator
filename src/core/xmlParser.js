@@ -279,11 +279,29 @@ export function extractXmlData(xmlDoc) {
 
   const inWords = getTextContent(xmlDoc, 'Totals > InWords') || '';
 
-  const adendaFields = ['REFERENCIA_INTERNA', 'CodigoCliente', 'Num_OrdenCompra', 'CondicionPago', 'NRC_COF', 'FechaVencimiento'];
+  const adendaDefaults = [
+    { name: 'REFERENCIA_INTERNA', label: 'Referencia Interna' },
+    { name: 'CodigoCliente', label: 'Código de Cliente' },
+    { name: 'Num_OrdenCompra', label: 'No. Orden de Compra' },
+    { name: 'CodigoVendedor', label: 'Código de Vendedor' },
+    { name: 'CondicionPago', label: 'Condición de Pago' },
+    { name: 'NRC_COF', label: 'NRC COF' },
+    { name: 'OBSERVACIONES', label: 'Observaciones' },
+    { name: 'FechaVencimiento', label: 'Fecha de Vencimiento' },
+  ];
+  const adendaInfos = xmlDoc.querySelectorAll('AdditionalDocumentInfo > AdditionalInfo > AditionalData > Data > Info');
   const adenda = {};
-  adendaFields.forEach((f) => {
-    adenda[f] = getInfoValue(xmlDoc, 'AdditionalDocumentInfo > AdditionalInfo > AditionalData > Data > Info', f);
+  const seen = new Set();
+  adendaInfos.forEach((info) => {
+    const name = info.getAttribute('Name');
+    if (!name) return;
+    const value = info.getAttribute('Value') || '';
+    adenda[name] = value;
+    seen.add(name);
+  });
+  adendaDefaults.forEach(({ name }) => {
+    if (!seen.has(name)) adenda[name] = '';
   });
 
-  return { seller, buyer, items, totals, header, inWords, condicionOperacion: condicionTexto, payments, adenda };
+  return { seller, buyer, items, totals, header, inWords, condicionOperacion: condicionTexto, payments, adenda, adendaDefaults };
 }

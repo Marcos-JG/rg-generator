@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Dropzone from '../shared/Dropzone';
 import { useConfigStore } from '../../stores/configStore';
-import { parseXmlFile } from '../../core/xmlParser';
+import { parseXmlFile, extractXmlData } from '../../core/xmlParser';
 import { getConfig } from '../../configs';
 
 export default function XmlUploader() {
@@ -23,9 +23,21 @@ export default function XmlUploader() {
         return;
       }
 
+      let adendaFields = config.adendaFields || null;
+      try {
+        const xmlData = extractXmlData(doc);
+        if (xmlData.adendaDefaults && xmlData.adendaDefaults.length) {
+          adendaFields = xmlData.adendaDefaults.map(({ name, label }) => ({
+            id: name,
+            label,
+            required: false,
+          }));
+        }
+      } catch (e) { /* keep config default */ }
+
       setXmlString(content);
       setMetadata(metadata);
-      setCurrentConfig(config);
+      setCurrentConfig(adendaFields ? { ...config, adendaFields } : config);
     } catch (err) {
       alert('Error al parsear el XML: ' + err.message);
     }

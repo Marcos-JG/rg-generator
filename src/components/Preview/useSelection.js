@@ -112,7 +112,7 @@ export default function useSelection(containerRef, overrides, setOverrides, rend
   };
 
   const onMouseOver = (e) => {
-    if (containerRef.current?.hasAttribute('data-col-dragging')) return;
+    if (containerRef.current?.hasAttribute('data-col-dragging') || containerRef.current?.hasAttribute('data-resizing')) return;
     const hit = findSelectable(e.target);
     if (hit) {
       const dataEl = hit.el.closest('[data-rg-id]');
@@ -123,7 +123,7 @@ export default function useSelection(containerRef, overrides, setOverrides, rend
   };
 
   const onMouseOut = () => {
-    if (containerRef.current?.hasAttribute('data-col-dragging')) return;
+    if (containerRef.current?.hasAttribute('data-col-dragging') || containerRef.current?.hasAttribute('data-resizing')) return;
     setHovered('');
   };
 

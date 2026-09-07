@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <Version>1</Version>
+    <CountryCode>SV</CountryCode>
+    <Header>
+        <DocType>03</DocType>
+        <GUID>7B2C9E01-55AD-4F3A-8D64-C1E70B29A4F8</GUID>
+        <IssuedDateTime>2026-08-14T10:18:03</IssuedDateTime>
+        <AdditionalIssueType>00</AdditionalIssueType>
+        <Currency>USD</Currency>
+        <AdditionalIssueDocInfo>
+            <Info Name="Secuencial" Value="000000000004071"/>
+            <Info Name="CodEstPuntoV" Value="M001P001"/>
+            <Info Name="TipoModelo" Value="1"/>
+            <Info Name="TipoOperacion" Value="1"/>
+        </AdditionalIssueDocInfo>
+    </Header>
+    <Seller>
+        <TaxID>06141602171030</TaxID>
+        <TaxIDAdditionalInfo>
+            <Info Name="NRC" Value="2579392"/>
+            <Info Name="CodigoActividad" Value="46376"/>
+            <Info Name="DescActividad"
+                Value="Venta al por mayor de productos farináceos de panadería (pan dulce,cakes, respostería, etc )"
+            />
+        </TaxIDAdditionalInfo>
+        <Name>Distribuidora Chavarria, S.A. de C.V.</Name>
+        <Contact>
+            <PhoneList>
+                <Phone>7922-9504</Phone>
+            </PhoneList>
+            <EmailList>
+                <Email>recepciondtechavarria@gmail.com</Email>
+            </EmailList>
+        </Contact>
+        <AdditionlInfo>
+            <Info Name="NombreComercial" Value="DISCHAVA"/>
+            <Info Name="TipoEstablecimiento" Value="02"/>
+            <Info Name="CodPuntoVentaMH" Value="P001"/>
+            <Info Name="CodEstablecimiento" Value="M001"/>
+            <Info Name="CodEstablecimientoMH" Value="M001"/>
+            <Info Name="CodPuntoVenta" Value="P001"/>
+        </AdditionlInfo>
+        <AddressInfo>
+            <Address>Carretera a Quezaltepeque km 20 complejo ofibodegas nejapa 2 Bog 34</Address>
+            <District>21</District>
+            <State>06</State>
+            <Country>SV</Country>
+        </AddressInfo>
+    </Seller>
+    <Buyer>
+        <TaxID>06142509081025</TaxID>
+        <TaxIDAdditionalInfo>
+            <Info Name="NRC" Value="2214508"/>
+            <Info Name="CodigoActividad" Value="46301"/>
+            <Info Name="DescActividad"
+                Value="Venta al por mayor de productos de panaderia y reposteria"/>
+        </TaxIDAdditionalInfo>
+        <Name>PANADERIA Y REPOSTERIA EL TRIGAL, S.A. DE C.V.</Name>
+        <Contact>
+            <PhoneList>
+                <Phone>7679-7530</Phone>
+            </PhoneList>
+            <EmailList>
+                <Email>vidal.ruiz@ejje.com</Email>
+            </EmailList>
+        </Contact>
+        <AddressInfo>
+            <Address>MERCADO CENTRAL EDIFICIO N° 3 PUESTO # 30 SAN SAL</Address>
+            <District>23</District>
+            <State>06</State>
+            <Country>SV</Country>
+        </AddressInfo>
+    </Buyer>
+    <Items>
+        <Item Number="1">
+            <Codes>
+                <Code Name="Codigo" Value="HT02"/>
+            </Codes>
+            <Type>1</Type>
+            <Description>HARINA GOLDEN CAKE SUAVE</Description>
+            <Qty>25.0000</Qty>
+            <UnitOfMeasure>59</UnitOfMeasure>
+            <Price>20.000000</Price>
+            <Discounts>
+                <Discount>
+                    <Amount>112.500000</Amount>
+                </Discount>
+            </Discounts>
+            <Charges>
+                <Charge>
+                    <Code>VENTA_GRAVADA</Code>
+                    <Amount>387.500000</Amount>
+                </Charge>
+                <Charge>
+                    <Code>VENTA_EXENTA</Code>
+                    <Amount>0.000000</Amount>
+                </Charge>
+                <Charge>
+                    <Code>VENTA_NO_SUJETA</Code>
+                    <Amount>0.000000</Amount>
+                </Charge>
+                <Charge>
+                    <Code>NO_GRAVADO</Code>
+                    <Amount>0.000000</Amount>
+                </Charge>
+            </Charges>
+            <Totals>
+                <TotalItem>387.500000</TotalItem>
+            </Totals>
+            <AdditionalInfo>
+                <Info Name="PrecioSugeridoVenta" Value="15.500000"/>
+                <Info Name="IvaItem" Value="44.579600"/>
+            </AdditionalInfo>
+        </Item>
+    </Items>
+    <Totals>
+        <TotalCharges>
+            <TotalCharge>
+                <Code>TOTAL_NO_SUJETA</Code>
+                <Amount>0.0000</Amount>
+            </TotalCharge>
+            <TotalCharge>
+                <Code>TOTAL_EXENTA</Code>
+                <Amount>0.0000</Amount>
+            </TotalCharge>
+            <TotalCharge>
+                <Code>TOTAL_GRAVADA</Code>
+                <Amount>387.5000</Amount>
+            </TotalCharge>
+            <TotalCharge>
+                <Code>TOTAL_NO_GRAVADO</Code>
+                <Amount>0.0000</Amount>
+            </TotalCharge>
+        </TotalCharges>
+        <TotalDiscounts>
+            <Discount>
+                <Code>NO_SUJETA</Code>
+                <Amount>0.0000</Amount>
+            </Discount>
+            <Discount>
+                <Code>EXENTA</Code>
+                <Amount>0.0000</Amount>
+            </Discount>
+            <Discount>
+                <Code>GRAVADA</Code>
+                <Amount>0.0000</Amount>
+            </Discount>
+            <Discount>
+                <Code>PORCENTAJE_DESCUENTO</Code>
+                <Amount>0.0000</Amount>
+            </Discount>
+        </TotalDiscounts>
+        <GrandTotal>
+            <InvoiceTotal>387.5000</InvoiceTotal>
+        </GrandTotal>
+        <InWords>TRESCIENTOS OCHENTA Y SIETE CON 50/100 CTVS</InWords>
+        <AdditionalInfo>
+            <Info Name="IvaRetenido" Value="0.0000"/>
+            <Info Name="RetencionRenta" Value="0.0"/>
+            <Info Name="CondicionOperacion" Value="2"/>
+        </AdditionalInfo>
+    </Totals>
+    <AdditionalDocumentInfo>
+        <AdditionalInfo>
+            <AditionalData>
+                <Data Name="APENDICE" Id="0">
+                    <Info Name="REFERENCIA_INTERNA" Value="oInvoices_82273_826032554"/>
+                    <Info Name="CodigoCliente" Value="CL0871"/>
+                    <Info Name="Num_Orde    nCompra" Value=""/>
+                    <Info Name="CodigoVendedor" Value="RUTA 7"/>
+                    <Info Name="CondicionPago" Value="30 DIAS"/>
+                    <Info Name="NRC_COF" Value=""/>
+                    <Info Name="OBSERVACIONES" Value=""/>
+                    <Info Name="FechaVencimiento" Value="7/7/2026 12:00:00 AM"/>
+                </Data>
+            </AditionalData>
+        </AdditionalInfo>
+        <AdditionalInfo>
+            <Code>oInvoices_82273_826032554</Code>
+            <Type>ADENDA</Type>
+            <AditionalInfo>
+                <Info Name="VALIDAR_REFERENCIA_INTERNA" Value="VALIDAR"/>
+            </AditionalInfo>
+        </AdditionalInfo>
+    </AdditionalDocumentInfo>
+    <TaxEntityResponse>
+        <Info Name="estado" Value="PROCESADO"/>
+        <Info Name="codigoGeneracion" Value="F0B59B49-426B-4BDB-BC9F-61E767837B80"/>
+        <Info Name="selloRecibido" Value="20269508EAC01C84418893E975E8DFC8E039JMMP"/>
+        <Info Name="fhProcesamiento" Value="07/07/2026 11:56:07"/>
+        <Info Name="clasificaMsg" Value="10"/>
+        <Info Name="codigoMsg" Value="001"/>
+        <Info Name="descripcionMsg" Value="RECIBIDO"/>
+    </TaxEntityResponse>
+</Root>
