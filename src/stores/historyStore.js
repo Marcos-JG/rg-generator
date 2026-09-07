@@ -12,11 +12,10 @@ export const useHistoryStore = create((set, get) => ({
     set({ past: newPast, future: [] });
   },
 
-  undo: () => {
+  undo: (current) => {
     const { past, future } = get();
     if (past.length === 0) return null;
     const previous = past[past.length - 1];
-    const current = past[past.length - 1];
     set({
       past: past.slice(0, -1),
       future: [current, ...future].slice(0, MAX_HISTORY),
@@ -24,12 +23,12 @@ export const useHistoryStore = create((set, get) => ({
     return previous;
   },
 
-  redo: () => {
+  redo: (current) => {
     const { past, future } = get();
     if (future.length === 0) return null;
     const next = future[0];
     set({
-      past: [...past, next].slice(-MAX_HISTORY),
+      past: [...past, current].slice(-MAX_HISTORY),
       future: future.slice(1),
     });
     return next;

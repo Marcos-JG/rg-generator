@@ -24,8 +24,6 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     return merged;
   };
 
-  let colCounter = 0;
-  const nextColId = () => `col-${colCounter++}`;
 
   const sectionVerticalSpacing = (rid, sectionKey) => {
     const self = overrides[rid] || {};
@@ -107,7 +105,7 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
   currentConfig.itemColumns.forEach(c => { itemColumnMap[c.id] = c; });
   const orderedItemColumns = itemsFieldOrder.map(id => itemColumnMap[id]).filter(Boolean);
 
-  const colIds = orderedItemColumns.map(() => nextColId());
+  const colIds = orderedItemColumns.map(c => `col-${c.id}`);
 
   const itemHdrs = orderedItemColumns
     .map((c, i) => {

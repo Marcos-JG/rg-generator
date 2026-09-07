@@ -1,145 +1,116 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useHistoryStore } from '../../stores/historyStore';
+import { useState, useEffect, useRef } from 'react';
 import { useConfigStore } from '../../stores/configStore';
-import { findSelectable, findTextContent } from './helpers';
+import { findSelectable } from './helpers';
+import { movementDelta, movementTarget } from '../../core/freeMovement';
 
 export default function useSelection(containerRef, overrides, setOverrides, renderKey, setRenderKey) {
   const [hovered, setHovered] = useState('');
   const [selected, setSelected] = useState('');
-  const setDocTitle = useConfigStore((s) => s.setDocTitle);
+  const editing = useRef(false);
+  const { undo: applyUndo, redo: applyRedo, setText, xmlString, customXslt } = useConfigStore();
 
-  const saveSnapshot = useHistoryStore((s) => s.snapshot);
-  const undoHist = useHistoryStore((s) => s.undo);
-  const redoHist = useHistoryStore((s) => s.redo);
-
-  const applyUndo = useCallback(() => {
-    const s = undoHist();
-    if (s && containerRef.current) {
-      const data = JSON.parse(s);
-      setOverrides(data.overrides || {});
-      setRenderKey((k) => k + 1);
-    }
-  }, [undoHist]);
-
-  const applyRedo = useCallback(() => {
-    const s = redoHist();
-    if (s && containerRef.current) {
-      const data = JSON.parse(s);
-      setOverrides(data.overrides || {});
-      setRenderKey((k) => k + 1);
-    }
-  }, [redoHist]);
+  useEffect(() => { setSelected(''); setHovered(''); editing.current = false; }, [xmlString, customXslt]);
 
   useEffect(() => {
     const kd = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); applyUndo(); return; }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); applyRedo(); return; }
-      if (e.key === 'Escape') { setSelected(''); return; }
-
-      if (!selected || e.target.contentEditable === 'true') return;
-
-      const step = e.shiftKey ? 10 : 1;
-      const map = { ArrowLeft: ['left', -step], ArrowRight: ['left', step], ArrowUp: ['top', -step], ArrowDown: ['top', step] };
-      const entry = map[e.key];
-      if (!entry) return;
-      if (selected.startsWith('grid-row') || selected.startsWith('header-row')) return;
-
-      e.preventDefault();
-
-      const el = containerRef.current?.querySelector(`[data-rg-id="${selected}"]`);
-      let targetKey = selected;
-      if (el) {
-        const section = el.closest('[data-drag-section]');
-        if (section) targetKey = 'section-' + section.getAttribute('data-drag-section');
+      if (customXslt || !xmlString || containerRef.current?.hasAttribute('data-free-moving') || e.target.closest?.('input, textarea, select, [contenteditable="true"]')) return;
+      const key = e.key.toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) applyRedo(); else applyUndo();
+        return;
       }
-
+      if ((e.ctrlKey || e.metaKey) && key === 'y') { e.preventDefault(); applyRedo(); return; }
+      if (e.key === 'Escape') { setSelected(''); return; }
+      if (!selected) return;
+      const step = e.shiftKey ? 10 : 1;
+      const entry = { ArrowLeft: ['left', -step], ArrowRight: ['left', step], ArrowUp: ['top', -step], ArrowDown: ['top', step] }[e.key];
+      if (!entry) return;
+      e.preventDefault();
+      const el = [...(containerRef.current?.querySelectorAll('[data-rg-id]') || [])].find(n => n.dataset.rgId === selected);
+      if (!el) return;
       const [prop, delta] = entry;
-      setOverrides((prev) => {
-        const cur = prev[targetKey] || {};
-        const curVal = parseFloat(cur[prop]) || 0;
-        return { ...prev, [targetKey]: { ...cur, [prop]: curVal + delta + 'px' } };
-      });
-      setRenderKey((k) => k + 1);
+      const page = containerRef.current;
+      const bounds = page.getBoundingClientRect();
+      const scale = bounds.width / (page.offsetWidth || bounds.width || 1) || 1;
+      const move = movementDelta(el.getBoundingClientRect(), bounds, prop === 'left' ? delta * scale : 0, prop === 'top' ? delta * scale : 0, scale);
+      const store = useConfigStore.getState();
+      const current = store.positions[selected] || { x: 0, y: 0, z: 1 };
+      store.setPosition(selected, { ...current, x: current.x + move.x, y: current.y + move.y });
     };
     window.addEventListener('keydown', kd);
     return () => window.removeEventListener('keydown', kd);
-  }, [applyUndo, applyRedo, selected]);
+  }, [applyUndo, applyRedo, selected, setOverrides, setRenderKey, containerRef, xmlString, customXslt]);
 
+  const busy = () => editing.current || customXslt || containerRef.current?.matches('[data-col-dragging], [data-resizing], [data-free-moving]');
+  const selectionTarget = target => {
+    const mode = containerRef.current?.dataset.moveMode;
+    return mode === 'reorder'
+      ? findSelectable(target)?.el.closest('[data-rg-id]')
+      : movementTarget(target, mode);
+  };
   const onClick = (e) => {
-    if (containerRef.current?.hasAttribute('data-col-dragging')) return;
-    if (e.target.closest('.col-resize-handle')) return;
-    const hit = findSelectable(e.target);
-    if (hit) {
-      e.stopPropagation();
-      const dataEl = hit.el.closest('[data-rg-id]');
-      const rgId = dataEl?.getAttribute('data-rg-id');
-      if (!rgId) return;
-      setSelected(rgId);
-      setHovered('');
-    } else {
-      setSelected('');
-    }
-  };
-
-  const onDblClick = (e) => {
-    const hit = findSelectable(e.target);
-    if (!hit) return;
-    const txt = findTextContent(hit.el);
-    if (!txt) return;
-    e.stopPropagation();
-    saveSnapshot(JSON.stringify({ overrides }));
-    const wrap = txt.nodeType === 3 ? txt.parentElement : txt;
-    const rgId = hit.el.closest('[data-rg-id]')?.getAttribute('data-rg-id');
-    wrap.contentEditable = 'true';
-    wrap.focus();
-    wrap.style.outline = '2.5px solid #22c55e';
-    wrap.style.outlineOffset = '2px';
-    const range = document.createRange();
-    range.selectNodeContents(wrap);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-    wrap.addEventListener('blur', () => {
-      wrap.contentEditable = 'false';
-      wrap.style.outline = '';
-      wrap.style.outlineOffset = '';
-      if (rgId === 'doc-title') {
-        const newText = wrap.textContent.trim();
-        setDocTitle(newText || null);
-        setRenderKey((k) => k + 1);
-      }
-    }, { once: true });
-  };
-
-  const onMouseOver = (e) => {
-    if (containerRef.current?.hasAttribute('data-col-dragging') || containerRef.current?.hasAttribute('data-resizing')) return;
-    const hit = findSelectable(e.target);
-    if (hit) {
-      const dataEl = hit.el.closest('[data-rg-id]');
-      setHovered(dataEl?.getAttribute('data-rg-id') || '');
-    } else {
-      setHovered('');
-    }
-  };
-
-  const onMouseOut = () => {
-    if (containerRef.current?.hasAttribute('data-col-dragging') || containerRef.current?.hasAttribute('data-resizing')) return;
+    if (busy() || e.target.closest('.col-resize-handle, [data-resize]')) return;
+    setSelected(selectionTarget(e.target)?.getAttribute('data-rg-id') || '');
     setHovered('');
   };
-
+  const onDblClick = (e) => {
+    if (busy()) return;
+    const wrap = e.target.closest('[data-rg-text]');
+    if (!wrap) return;
+    e.stopPropagation();
+    const original = wrap.textContent;
+    const id = wrap.getAttribute('data-rg-text');
+    editing.current = true;
+    wrap.setAttribute('contenteditable', 'true');
+    wrap.setAttribute('tabindex', '-1');
+    wrap.style.outline = '2px solid #22c55e';
+    wrap.focus();
+    const range = document.createRange();
+    range.selectNodeContents(wrap);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    let cancelled = false;
+    const keydown = event => {
+      if (event.key === 'Escape') { event.preventDefault(); cancelled = true; wrap.blur(); }
+      if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); wrap.blur(); }
+      event.stopPropagation();
+    };
+    const paste = event => {
+      event.preventDefault();
+      const selection = window.getSelection();
+      if (!selection.rangeCount) return;
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      const text = document.createTextNode(event.clipboardData.getData('text/plain'));
+      range.insertNode(text);
+      range.setStartAfter(text);
+      range.collapse(true);
+      selection.removeAllRanges(); selection.addRange(range);
+    };
+    wrap.addEventListener('keydown', keydown);
+    wrap.addEventListener('paste', paste);
+    wrap.addEventListener('blur', () => {
+      const text = cancelled ? original : wrap.innerText ?? wrap.textContent;
+      wrap.removeEventListener('keydown', keydown);
+      wrap.removeEventListener('paste', paste);
+      wrap.removeAttribute('contenteditable');
+      wrap.removeAttribute('tabindex');
+      wrap.style.outline = '';
+      wrap.textContent = text;
+      editing.current = false;
+      if (!cancelled && text !== original) setText(id, text);
+    }, { once: true });
+  };
+  const onMouseOver = (e) => {
+    if (busy()) return;
+    setHovered(selectionTarget(e.target)?.getAttribute('data-rg-id') || '');
+  };
+  const onMouseOut = () => { if (!busy()) setHovered(''); };
   const updateStyle = (prop, val) => {
-    if (!selected) return;
-    saveSnapshot(JSON.stringify({ overrides }));
-    setOverrides((prev) => ({
-      ...prev,
-      [selected]: { ...prev[selected], [prop]: val },
-    }));
-    setRenderKey((k) => k + 1);
+    if (!selected || customXslt) return;
+    const patch = typeof prop === 'object' ? prop : { [prop]: val };
+    setOverrides(prev => ({ ...prev, [selected]: { ...prev[selected], ...patch } }));
   };
-
-  return {
-    hovered, selected, setSelected,
-    onClick, onDblClick, onMouseOver, onMouseOut,
-    updateStyle, applyUndo, applyRedo,
-  };
+  return { hovered, selected, setSelected, onClick, onDblClick, onMouseOver, onMouseOut, updateStyle, applyUndo, applyRedo };
 }

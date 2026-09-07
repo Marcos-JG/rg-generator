@@ -2,6 +2,7 @@ import { useConfigStore } from '../../stores/configStore';
 import { generateXslt } from '../../core/xsltGenerator';
 import { extractXmlData } from '../../core/xmlParser';
 import Button from '../shared/Button';
+import { cleanPreviewHtml } from '../../core/editableHtml';
 
 const BASE_TEMPLATE = `<?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -166,7 +167,7 @@ export default function DownloadButton() {
     if (!previewEl) return;
 
     const renderCss = `
-      .dte-page-wrap, .dte-page-wrap * {
+      .dte-page-wrap {
         font-family: Arial, sans-serif;
         font-size: 7pt;
       }
@@ -190,7 +191,7 @@ export default function DownloadButton() {
     `;
     const pageCss = `
       body { margin: 0; padding: 0; }
-      .dte-page-wrap { width: 8.5in; margin: 0 auto; }
+      .dte-page-wrap { width: 8.5in; min-height: 11in; padding: 0.25in; box-sizing: border-box; position: relative; margin: 0 auto; }
     `;
 
     const fullHtml = `<!DOCTYPE html>
@@ -201,7 +202,7 @@ export default function DownloadButton() {
   <style>${renderCss}${pageCss}</style>
 </head>
 <body>
-  <div class="dte-page-wrap">${previewEl.innerHTML}</div>
+  <div class="dte-page-wrap">${cleanPreviewHtml(previewEl)}</div>
 </body>
 </html>`;
 
@@ -221,7 +222,7 @@ export default function DownloadButton() {
     if (!previewEl) return;
 
     const renderCss = `
-      .dte-page-wrap, .dte-page-wrap * {
+      .dte-page-wrap {
         font-family: Arial, sans-serif;
         font-size: 7pt;
       }
@@ -233,7 +234,10 @@ export default function DownloadButton() {
         padding-top: 0.02in;
         padding-bottom: 0.02in;
       }
+      body { margin: 0; }
+      .dte-page-wrap { width: 8.5in; min-height: 11in; padding: 0.25in; box-sizing: border-box; position: relative; margin: 0 auto; }
       @media print {
+        @page { size: letter; margin: 0; }
         body { font-size: 7pt; }
         .dte-page-wrap { width: 8.5in; margin: 0 auto; }
       }
@@ -247,7 +251,7 @@ export default function DownloadButton() {
   <style>${renderCss}</style>
 </head>
 <body>
-  <div class="dte-page-wrap">${previewEl.innerHTML}</div>
+  <div class="dte-page-wrap">${cleanPreviewHtml(previewEl)}</div>
 </body>
 </html>`;
 
@@ -260,6 +264,7 @@ export default function DownloadButton() {
   };
 
   return (
+    <div>
     <div className="flex gap-2">
       <Button onClick={handleDownloadXsl} disabled={!currentConfig}>
         {customXslt ? 'Descargar XSLT Propio' : 'Descargar .xsl'}
@@ -270,6 +275,8 @@ export default function DownloadButton() {
       <Button onClick={handleDownloadPdf} variant="secondary" disabled={!currentConfig}>
         Imprimir / PDF
       </Button>
+    </div>
+    {!customXslt && <p className="mt-2 text-xs text-gray-500">Los cambios del editor se guardan en HTML y PDF. La exportación XSLT todavía utiliza la plantilla base.</p>}
     </div>
   );
 }

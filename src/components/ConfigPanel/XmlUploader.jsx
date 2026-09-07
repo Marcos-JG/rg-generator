@@ -5,7 +5,7 @@ import { parseXmlFile, extractXmlData } from '../../core/xmlParser';
 import { getConfig } from '../../configs';
 
 export default function XmlUploader() {
-  const { setXmlString, setMetadata, setCurrentConfig, customXslt, customXsltName, setCustomXslt } = useConfigStore();
+  const { loadDocument, customXslt, customXsltName, setCustomXslt } = useConfigStore();
   const [mode, setMode] = useState('xml');
 
   const handleXmlLoaded = (content, fileName) => {
@@ -35,9 +35,7 @@ export default function XmlUploader() {
         }
       } catch (e) { /* keep config default */ }
 
-      setXmlString(content);
-      setMetadata(metadata);
-      setCurrentConfig(adendaFields ? { ...config, adendaFields } : config);
+      loadDocument(content, metadata, adendaFields ? { ...config, adendaFields } : config);
     } catch (err) {
       alert('Error al parsear el XML: ' + err.message);
     }
