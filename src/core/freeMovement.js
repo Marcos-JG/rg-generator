@@ -1,5 +1,9 @@
 export function movementTarget(target, mode = 'elements') {
   if (target.closest?.('[contenteditable="true"], [data-resize], .col-resize-handle')) return null;
+  // A table column and all of its detail cells are one structure. In free
+  // movement the table moves as a unit; column changes belong to reorder mode.
+  const itemsTable = target.closest?.('.items-table');
+  if (itemsTable) return itemsTable.closest('[data-drag-section="items"]');
   if (mode === 'blocks') {
     const block = target.closest?.('[data-drag-section]');
     if (block) return block;
@@ -20,6 +24,7 @@ export function movementDelta(rect, page, dx, dy, scale = 1) {
 
 export function applyPositions(doc, positions = {}) {
   for (const el of doc.querySelectorAll('[data-rg-id]')) {
+    if (el.dataset.rgId === 'footer') continue;
     const position = positions[el.dataset.rgId];
     if (!position) continue;
     el.style.transform = `translate(${position.x}px, ${position.y}px)`;

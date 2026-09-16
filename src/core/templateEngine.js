@@ -1,7 +1,7 @@
 import { escapeXml } from './escapeXml.js';
 
 export function replaceAllPlaceholders(template, key, value) {
-  return template.replaceAll(`{{${key}}}`, value);
+  return template.replaceAll(`{{${key}}}`, () => value);
 }
 
 export function processTemplate(template, replacements) {

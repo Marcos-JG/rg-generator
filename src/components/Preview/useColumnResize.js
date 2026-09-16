@@ -20,7 +20,7 @@ export default function useColumnResize(containerRef, setOverrides, renderKey, s
         if (!section) return;
 
         const sectionName = section.getAttribute('data-drag-section');
-        const sectionRid = 'section-' + sectionName;
+        const sectionRid = sectionName;
         const startW = td.getBoundingClientRect().width;
 
         el.querySelectorAll('[draggable="true"]').forEach((n) => n.setAttribute('draggable', 'false'));

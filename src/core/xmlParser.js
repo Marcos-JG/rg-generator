@@ -161,6 +161,20 @@ function getAdditionalInfoValue(doc, name) {
   return getInfoValue(doc, 'Totals > AdditionalInfo > Info', name);
 }
 
+function getNamedData(xmlDoc, name) {
+  return [...xmlDoc.querySelectorAll('AdditionalDocumentInfo Data')]
+    .filter((data) => data.getAttribute('Name') === name);
+}
+
+function infoRecord(data) {
+  const record = {};
+  data.querySelectorAll(':scope > Info').forEach((info) => {
+    const name = info.getAttribute('Name');
+    if (name) record[name] = info.getAttribute('Value') || info.getAttribute('Data') || '';
+  });
+  return record;
+}
+
 export function extractXmlData(xmlDoc) {
   const sellerAdditionalInfos = xmlDoc.querySelectorAll('Seller > TaxIDAdditionalInfo > Info');
   const sellerActividadCodigo = getInfoValue(xmlDoc, 'Seller > TaxIDAdditionalInfo > Info', 'CodigoActividad');
@@ -182,13 +196,24 @@ export function extractXmlData(xmlDoc) {
   };
 
   const buyerNRC = getInfoValue(xmlDoc, 'Buyer > TaxIDAdditionalInfo > Info', 'NRC');
+  const buyerActividadCodigo = getInfoValue(xmlDoc, 'Buyer > TaxIDAdditionalInfo > Info', 'CodigoActividad');
+  const buyerActividadDesc = getInfoValue(xmlDoc, 'Buyer > TaxIDAdditionalInfo > Info', 'DescActividad');
+  const buyerNombreComercial = getInfoValue(xmlDoc, 'Buyer > AdditionlInfo > Info', 'NombreComercial');
+  const buyerTipoEstablecimiento = getInfoValue(xmlDoc, 'Buyer > AdditionlInfo > Info', 'TipoEstablecimiento');
   const buyer = {
     Name: getTextContent(xmlDoc, 'Buyer > Name') || '',
     TaxIDType: getTextContent(xmlDoc, 'Buyer > TaxIDType') || '',
     TaxID: getTextContent(xmlDoc, 'Buyer > TaxID') || '',
     NRC: buyerNRC,
+    CodigoActividad: buyerActividadCodigo,
+    DescActividad: buyerActividadDesc,
     Email: getTextContent(xmlDoc, 'Buyer > Contact > EmailList > Email') || '',
+    Phone: getTextContent(xmlDoc, 'Buyer > Contact > PhoneList > Phone') || '',
     Address: getTextContent(xmlDoc, 'Buyer > AddressInfo > Address') || '',
+    District: getTextContent(xmlDoc, 'Buyer > AddressInfo > City') || getTextContent(xmlDoc, 'Buyer > AddressInfo > District') || '',
+    State: getTextContent(xmlDoc, 'Buyer > AddressInfo > State') || '',
+    NombreComercial: buyerNombreComercial,
+    TipoEstablecimiento: buyerTipoEstablecimiento,
   };
 
   const items = [];
@@ -206,10 +231,10 @@ export function extractXmlData(xmlDoc) {
     };
     items.push({
       Number: '',
-      Qty: getVal('Quantity'),
+      Qty: getVal('Qty') || getVal('Quantity'),
       UnitOfMeasure: getVal('UnitOfMeasure'),
       Description: getVal('Description'),
-      Price: getVal('UnitPrice'),
+      Price: getVal('Price') || getVal('UnitPrice'),
       Discount: getCharge('DESCUENTO'),
       NO_GRAVADO: getCharge('NO_GRAVADO'),
       VENTA_NO_SUJETA: getCharge('VENTA_NO_SUJETA'),
@@ -220,33 +245,38 @@ export function extractXmlData(xmlDoc) {
 
   const getCharge = (code, container) => {
     if (!container) return '0.00';
-    const charges = container.querySelectorAll('Charge');
+    const charges = container.querySelectorAll('Charge, TotalCharge');
     for (const ch of charges) {
       if (ch.querySelector('Code')?.textContent === code) {
         return ch.querySelector('Amount')?.textContent || '0.00';
       }
     }
-    return '0.00';
+    return '';
   };
 
-  const totalsEl = xmlDoc.querySelector('Totals');
-  const chargesEl = totalsEl?.querySelector('Charges');
+  const totalsEl = xmlDoc.querySelector('Root > Totals');
+  const chargesEl = totalsEl?.querySelector('TotalCharges, Charges');
+  const invoiceTotal = totalsEl?.querySelector('GrandTotal > InvoiceTotal')?.textContent || '';
+  const ivaTax = [...(totalsEl?.querySelectorAll('TotalTaxes > TotalTax') || [])]
+    .find((tax) => tax.querySelector('Code')?.textContent === '20')?.querySelector('Amount')?.textContent || '';
+  const taxableTotal = ['TOTAL_GRAVADA', 'TOTAL_EXENTA', 'TOTAL_NO_SUJETA']
+    .reduce((sum, code) => sum + Number(getCharge(code, chargesEl) || 0), 0);
   const totals = {
-    SUBTOTAL: getCharge('SUBTOTAL', chargesEl),
-    TOTAL_NO_GRAVADO: getCharge('TOTAL_NO_GRAVADO', chargesEl),
-    TOTAL_GRAVADA: getCharge('TOTAL_GRAVADA', chargesEl),
-    TOTAL_EXENTA: getCharge('TOTAL_EXENTA', chargesEl),
-    TOTAL_NO_SUJETA: getCharge('TOTAL_NO_SUJETA', chargesEl),
-    TOTAL_DESCUENTO: getCharge('TOTAL_DESCUENTO', chargesEl),
-    TOTAL_PAGAR: getCharge('TOTAL_PAGAR', chargesEl),
-    IVA: getCharge('IVA', chargesEl),
+    SUBTOTAL: getCharge('SUBTOTAL', chargesEl) || String(taxableTotal || 0),
+    TOTAL_NO_GRAVADO: getCharge('TOTAL_NO_GRAVADO', chargesEl) || '0.00',
+    TOTAL_GRAVADA: getCharge('TOTAL_GRAVADA', chargesEl) || '0.00',
+    TOTAL_EXENTA: getCharge('TOTAL_EXENTA', chargesEl) || '0.00',
+    TOTAL_NO_SUJETA: getCharge('TOTAL_NO_SUJETA', chargesEl) || '0.00',
+    TOTAL_DESCUENTO: getCharge('TOTAL_DESCUENTO', chargesEl) || '0.00',
+    TOTAL_PAGAR: getCharge('TOTAL_PAGAR', chargesEl) || invoiceTotal || '0.00',
+    IVA: getCharge('IVA', chargesEl) || ivaTax || '0.00',
     IVA_PERCIBIDO: getAdditionalInfoValue(xmlDoc, 'IvaPercibido'),
     IVA_RETENIDO: getAdditionalInfoValue(xmlDoc, 'IvaRetenido'),
     RETENCION_RENTA: getAdditionalInfoValue(xmlDoc, 'RetencionRenta'),
     SEGURO: getAdditionalInfoValue(xmlDoc, 'Seguro'),
     FLETE: getAdditionalInfoValue(xmlDoc, 'Flete'),
-    MONTO_TOTAL_OPERACION: getAdditionalInfoValue(xmlDoc, 'MontoTotalOperacion'),
-    TOTAL_COMPRA: getCharge('TOTAL_COMPRA', chargesEl),
+    MONTO_TOTAL_OPERACION: getAdditionalInfoValue(xmlDoc, 'MontoTotalOperacion') || invoiceTotal || '0.00',
+    TOTAL_COMPRA: getCharge('TOTAL_COMPRA', chargesEl) || '0.00',
   };
 
   const header = {
@@ -254,6 +284,10 @@ export function extractXmlData(xmlDoc) {
     IssuedDateTime: getTextContent(xmlDoc, 'Header > IssuedDateTime') || '',
     DocType: getTextContent(xmlDoc, 'Header > DocType') || '',
     Currency: getTextContent(xmlDoc, 'Header > Currency') || '',
+    AdditionalIssueType: getTextContent(xmlDoc, 'Header > AdditionalIssueType') || '',
+    TipoModelo: getInfoValue(xmlDoc, 'Header > AdditionalIssueDocInfo > Info', 'TipoModelo'),
+    TipoTransmision: getInfoValue(xmlDoc, 'Header > AdditionalIssueDocInfo > Info', 'TipoOperacion')
+      || getInfoValue(xmlDoc, 'Header > AdditionalIssueDocInfo > Info', 'TipoTransmision'),
     Secuencial: getInfoValue(xmlDoc, 'Header > AdditionalIssueDocInfo > Info', 'Secuencial'),
     CodEstPuntoV: getInfoValue(xmlDoc, 'Header > AdditionalIssueDocInfo > Info', 'CodEstPuntoV'),
     ReceptionSeal: findInfoValue(xmlDoc, 'selloRecibido'),
@@ -279,6 +313,26 @@ export function extractXmlData(xmlDoc) {
 
   const inWords = getTextContent(xmlDoc, 'Totals > InWords') || '';
 
+  const relatedDocuments = getNamedData(xmlDoc, 'DOC_RELACIONADO').map(infoRecord);
+  const otherDocuments = getNamedData(xmlDoc, 'OTROS_DOC_RELACIONADOS').map(infoRecord);
+  const appendix = [...getNamedData(xmlDoc, 'INFORMACION_ADICIONAL'), ...getNamedData(xmlDoc, 'APENDICE')]
+    .flatMap((data) => Object.entries(infoRecord(data)).map(([name, value]) => ({ name, value })));
+  const responsible = {
+    NombreEntrega: findInfoValue(xmlDoc, 'NombreEntrega'),
+    DocuEntrega: findInfoValue(xmlDoc, 'DocuEntrega'),
+    NombreRecibe: findInfoValue(xmlDoc, 'NombreRecibe'),
+    DocuRecibe: findInfoValue(xmlDoc, 'DocuRecibe'),
+  };
+  const generalObservations = getInfoValue(xmlDoc,
+    'AdditionalDocumentInfo > AdditionalInfo > AditionalInfo > Info', 'Observaciones')
+    || getAdditionalInfoValue(xmlDoc, 'Observaciones') || '';
+
+  const taxes = [...xmlDoc.querySelectorAll('Totals > TotalTaxes > TotalTax')].map((tax) => ({
+    code: tax.querySelector('Code')?.textContent || '',
+    description: tax.querySelector('Description')?.textContent || '',
+    amount: tax.querySelector('Amount')?.textContent || '0.00',
+  }));
+
   const adendaDefaults = [
     { name: 'REFERENCIA_INTERNA', label: 'Referencia Interna' },
     { name: 'CodigoCliente', label: 'Código de Cliente' },
@@ -289,7 +343,8 @@ export function extractXmlData(xmlDoc) {
     { name: 'OBSERVACIONES', label: 'Observaciones' },
     { name: 'FechaVencimiento', label: 'Fecha de Vencimiento' },
   ];
-  const adendaInfos = xmlDoc.querySelectorAll('AdditionalDocumentInfo > AdditionalInfo > AditionalData > Data > Info');
+  const adendaInfos = [...xmlDoc.querySelectorAll('AdditionalDocumentInfo > AdditionalInfo > AditionalData > Data > Info')]
+    .filter((info) => !['DOC_RELACIONADO', 'OTROS_DOC_RELACIONADOS'].includes(info.parentElement?.getAttribute('Name')));
   const adenda = {};
   const seen = new Set();
   adendaInfos.forEach((info) => {
@@ -303,5 +358,6 @@ export function extractXmlData(xmlDoc) {
     if (!seen.has(name)) adenda[name] = '';
   });
 
-  return { seller, buyer, items, totals, header, inWords, condicionOperacion: condicionTexto, payments, adenda, adendaDefaults };
+  return { seller, buyer, items, totals, taxes, header, inWords, condicionOperacion: condicionTexto, payments,
+    adenda, adendaDefaults, relatedDocuments, otherDocuments, appendix, responsible, generalObservations };
 }

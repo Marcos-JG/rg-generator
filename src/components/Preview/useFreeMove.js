@@ -30,7 +30,7 @@ export default function useFreeMove(containerRef, active, mode, setSelected) {
       // Suppress only the synthetic click following a drag, never a new gesture.
       suppressClick = false;
       const el = movementTarget(e.target, mode);
-      if (!el || !page.contains(el)) return;
+      if (!el || !page.contains(el) || el.dataset.rgId === 'footer') return;
       const positions = useConfigStore.getState().positions;
       const id = el.dataset.rgId;
       const start = positions[id] || { x: 0, y: 0 };

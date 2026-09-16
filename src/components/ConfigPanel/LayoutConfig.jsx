@@ -8,14 +8,13 @@ const SECTION_LABELS = {
   totals: 'Totales',
   observaciones: 'Observaciones',
   'datos-adicionales': 'Datos Adicionales',
-  footer: 'Footer',
   'header-logo': 'Logo',
   'header-ids': 'GUID',
   'header-qr': 'Código QR',
   'header-info': 'Info Documento',
 };
 
-const ALL_SECTIONS = ['emisor', 'receptor', 'items', 'totals', 'observaciones', 'datos-adicionales', 'footer'];
+const ALL_SECTIONS = ['emisor', 'receptor', 'items', 'totals', 'observaciones', 'datos-adicionales'];
 const ALL_HEADER_SECTIONS = ['header-logo', 'header-ids', 'header-qr', 'header-info'];
 
 const DEFAULT_GRID = [
@@ -23,10 +22,13 @@ const DEFAULT_GRID = [
   ['items'],
   ['totals', 'observaciones'],
   ['datos-adicionales'],
-  ['footer'],
 ];
 
 const DEFAULT_HEADER_GRID = [['header-logo'], ['header-ids', 'header-qr', 'header-info']];
+
+const withoutMovableFooter = (rows) => rows
+  .map(row => row.filter(section => section !== 'footer'))
+  .filter((row, index) => row.length > 0 || !rows[index].includes('footer'));
 
 function DragIcon() {
   return (
@@ -71,7 +73,7 @@ export default function LayoutConfig() {
   const setCurrentConfig = useConfigStore((s) => s.setCurrentConfig);
 
   const [grid, setGrid] = useState(() => {
-    return currentConfig?.layoutGrid || [...DEFAULT_GRID.map(r => [...r])];
+    return withoutMovableFooter(currentConfig?.layoutGrid || DEFAULT_GRID.map(r => [...r]));
   });
 
   const [headerGrid, setHeaderGrid] = useState(() => {
@@ -92,8 +94,9 @@ export default function LayoutConfig() {
   const unusedHeaderSections = ALL_HEADER_SECTIONS.filter(s => !usedHeaderSections.has(s));
 
   const updateGrid = (newGrid) => {
-    setGrid(newGrid);
-    const updatedConfig = { ...currentConfig, layoutGrid: newGrid };
+    const safeGrid = withoutMovableFooter(newGrid);
+    setGrid(safeGrid);
+    const updatedConfig = { ...currentConfig, layoutGrid: safeGrid };
     setCurrentConfig(updatedConfig);
   };
 
@@ -453,6 +456,10 @@ export default function LayoutConfig() {
 
       <h3 className="text-sm font-semibold text-gray-700">Cuerpo del Documento</h3>
       {renderGridBlock(grid, unusedSections, 'body', bodyHandlers)}
+      <div className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-2.5 py-2 text-xs text-gray-600">
+        <span className="font-medium">Pie de página</span>
+        <span className="text-[10px] text-gray-400">Siempre al final</span>
+      </div>
     </div>
   );
 }

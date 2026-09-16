@@ -1,8 +1,8 @@
 export default function Button({ children, onClick, variant = 'primary', className = '', ...props }) {
-  const base = 'px-4 py-2 rounded font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
+  const base = 'studio-button px-4 py-2 font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
   const variants = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
+    primary: 'studio-button-primary',
+    secondary: 'studio-button-secondary',
     danger: 'bg-red-600 text-white hover:bg-red-700',
     ghost: 'bg-transparent text-gray-600 hover:bg-gray-100',
   };

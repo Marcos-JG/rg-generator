@@ -1,0 +1,3 @@
+Generated with the built-in image generation tool.
+Prompt:
+Use case: logo-brand. Create a single square app logo image for RG Studio, a document layout editor with a refined Apple-inspired interface. Original abstract folded document symbol subtly suggesting an R, white sculptural paper strokes on a rounded cobalt-blue and sky-blue square. Simple bold silhouette readable at 40 pixels, restrained soft depth, precise balanced geometry, centered, icon fills 90 percent of canvas, transparent outside rounded square. No text, no letters printed, no Apple logo, no mockup, no surrounding scene. Final production app icon.

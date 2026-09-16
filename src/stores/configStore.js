@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useHistoryStore } from './historyStore';
+import { normalizeSavedDesign } from '../core/editorElements';
+import { getConfig } from '../configs';
 
 const defaultStyle = () => ({
   colorPrimary: '#020873', colorFont: '#333333', colorBorder: '#808080',
@@ -57,6 +59,26 @@ export const useConfigStore = create(persist((set, get) => {
   };
 }, {
   name: 'rg-generator-config',
+  version: 5,
+  migrate: persisted => {
+    const next = normalizeSavedDesign(persisted);
+    const country = next.metadata?.country?.toLowerCase();
+    const docType = String(next.metadata?.docType || '');
+    const fresh = getConfig(country, docType);
+    if (fresh && next.currentConfig) {
+      next.currentConfig = {
+        ...fresh,
+        ...next.currentConfig,
+        country: fresh.country,
+        docType: fresh.docType,
+        title: fresh.title,
+        sellerFields: fresh.sellerFields,
+        buyerFields: fresh.buyerFields,
+        totalsFields: fresh.totalsFields,
+      };
+    }
+    return next;
+  },
   partialize: (state) => ({ ...designState(state), xmlString: state.xmlString,
     metadata: state.metadata, customXslt: state.customXslt, customXsltName: state.customXsltName }),
 }));

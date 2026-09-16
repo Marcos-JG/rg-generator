@@ -1,6 +1,6 @@
 {
   "country": "sv",
-  "docType": "05",
+  "docType": "06",
   "title": "NOTA DE DÉBITO",
   "version": "v2-0-0",
   "sellerFields": [
@@ -18,6 +18,9 @@
     { "id": "Name", "label": "Nombre o Razón Social", "required": true },
     { "id": "TaxIDType", "label": "Tipo Documento Identificación", "required": true },
     { "id": "TaxID", "label": "Número Documento Identificación", "required": true },
+    { "id": "NRC", "label": "NRC", "required": true },
+    { "id": "DescActividad", "label": "Actividad Económica / Giro", "required": true },
+    { "id": "Phone", "label": "Número de Teléfono", "required": true },
     { "id": "Email", "label": "Correo Electrónico", "required": true },
     { "id": "Address", "label": "Dirección", "required": true }
   ],

@@ -18,6 +18,9 @@
     { "id": "Name", "label": "Nombre o Razón Social", "required": true },
     { "id": "TaxIDType", "label": "Tipo Documento Identificación", "required": true },
     { "id": "TaxID", "label": "Número Documento Identificación", "required": true },
+    { "id": "NRC", "label": "NRC", "required": true },
+    { "id": "DescActividad", "label": "Actividad Económica / Giro", "required": true },
+    { "id": "Phone", "label": "Número de Teléfono", "required": true },
     { "id": "Email", "label": "Correo Electrónico", "required": true },
     { "id": "Address", "label": "Dirección", "required": true }
   ],

@@ -1,5 +1,4 @@
 import { useConfigStore } from '../../stores/configStore';
-import Input from '../shared/Input';
 
 export default function ColumnConfig() {
   const currentConfig = useConfigStore((s) => s.currentConfig);
@@ -12,18 +11,18 @@ export default function ColumnConfig() {
         Columnas de Ítems
       </h3>
       <p className="text-xs text-gray-500">
-        {currentConfig.itemColumns.length} columnas configuradas (editing coming soon)
+        {currentConfig.itemColumns.length} columnas configuradas
       </p>
-      <div className="space-y-1">
+      <ul className="item-column-list" aria-label="Columnas de ítems y sus anchos">
         {currentConfig.itemColumns.map((col) => (
-          <div key={col.id} className="flex items-center gap-2 text-xs">
-            <span className="w-16 font-mono text-gray-600">{col.id}</span>
-            <span className="flex-1">{col.label}</span>
-            <span className="text-gray-400">{col.width}</span>
-            {col.required && <span className="text-red-500">*</span>}
-          </div>
+          <li key={col.id} className="item-column-row">
+            <span className="item-column-label">{col.label}</span>
+            <span className="item-column-width" aria-label={`Ancho: ${col.width}`}>{col.width}</span>
+            <span className="item-column-required">{col.required && <span aria-label="Columna obligatoria" title="Columna obligatoria">*</span>}</span>
+          </li>
         ))}
-      </div>
+      </ul>
+      <p className="text-xs text-gray-500">* Columna obligatoria</p>
     </div>
   );
 }

@@ -28,7 +28,7 @@ describe('direct editing interactions', () => {
     el.getBoundingClientRect = () => ({ left: 100, top: 100, right: 300, bottom: 140, width: 200 });
     return { page, el };
   };
-  it('keeps a single selection visible when changing between a title and an item cell', async () => {
+  it('keeps a single selection visible and selects the complete items table from a detail cell', async () => {
     const originalNode = text();
     await act(() => originalNode.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })));
     expect(text()).toBe(originalNode);
@@ -37,7 +37,7 @@ describe('direct editing interactions', () => {
     expect(host.querySelector('.rg-sel').dataset.rgId).toBe('header-title');
     await act(() => host.querySelector('[data-rg-id="item-0-Description"]').dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(host.querySelectorAll('.rg-sel')).toHaveLength(1);
-    expect(host.querySelector('.rg-sel').dataset.rgId).toBe('item-0-Description');
+    expect(host.querySelector('.rg-sel').dataset.rgId).toBe('items');
     await act(() => host.querySelector('[data-preview-content]').dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(host.querySelector('.rg-sel')).toBeNull();
   });
@@ -45,10 +45,12 @@ describe('direct editing interactions', () => {
     const select = host.querySelector('[aria-label="Modo de movimiento"]');
     await act(() => { select.value = 'blocks'; select.dispatchEvent(new Event('change', { bubbles: true })); });
     await act(() => host.querySelector('[data-rg-id="item-0-Description"]').dispatchEvent(new MouseEvent('mouseover', { bubbles: true })));
-    expect(host.querySelector('.rg-hover').dataset.rgId).toBe('section-items');
+    expect(host.querySelector('.rg-hover').dataset.rgId).toBe('items');
     await act(() => host.querySelector('[data-rg-id="item-0-Description"]').dispatchEvent(new MouseEvent('click', { bubbles: true })));
-    expect(host.querySelector('.rg-sel').dataset.rgId).toBe('section-items');
+    expect(host.querySelector('.rg-sel').dataset.rgId).toBe('items');
     expect(host.querySelector('.rg-hover')).toBeNull();
+    expect(host.querySelector('aside').textContent).toContain('Detalle de ítems');
+    expect(host.querySelector('aside').textContent).not.toContain('section-items');
   });
   it('accepts the next selection after a cancelled drag without a trailing click', async () => {
     const { el } = geometry();
@@ -59,7 +61,7 @@ describe('direct editing interactions', () => {
     await act(() => pointer(cell, 'pointerdown', 120, 120));
     await act(() => pointer(window, 'pointerup', 120, 120));
     await act(() => cell.dispatchEvent(new MouseEvent('click', { bubbles: true })));
-    expect(host.querySelector('.rg-sel').dataset.rgId).toBe('item-0-Description');
+    expect(host.querySelector('.rg-sel').dataset.rgId).toBe('items');
   });
   it('drags independently of rows, commits once and restores with undo', async () => {
     const { el } = geometry();
@@ -73,6 +75,20 @@ describe('direct editing interactions', () => {
     expect(host.querySelector('[data-rg-id="header-title"]').style.transform).toBe('translate(150px, 240px)');
     await act(() => useConfigStore.getState().undo());
     expect(host.querySelector('[data-rg-id="header-title"]').style.transform).toBe('');
+  });
+  it('moves the complete items table when dragging one detail cell', async () => {
+    const page = host.querySelector('[data-preview-content]');
+    const items = host.querySelector('[data-rg-id="items"]');
+    const cell = host.querySelector('[data-rg-id="item-0-Description"]');
+    Object.defineProperty(page, 'offsetWidth', { configurable: true, value: 816 });
+    page.getBoundingClientRect = () => ({ left: 0, top: 0, right: 816, bottom: 1056, width: 816 });
+    items.getBoundingClientRect = () => ({ left: 20, top: 300, right: 796, bottom: 500, width: 776, height: 200 });
+    await act(() => pointer(cell, 'pointerdown', 200, 350));
+    await act(() => pointer(window, 'pointermove', 210, 390));
+    await act(() => pointer(window, 'pointerup', 210, 390));
+    expect(useConfigStore.getState().positions.items).toMatchObject({ x: 10, y: 40 });
+    expect(useConfigStore.getState().positions['item-0-Description']).toBeUndefined();
+    expect(host.querySelector('[data-rg-id="items"]').style.transform).toBe('translate(10px, 40px)');
   });
   it('cancels a drag with Escape without creating history', async () => {
     const { el, page } = geometry();
@@ -92,6 +108,25 @@ describe('direct editing interactions', () => {
     expect(useConfigStore.getState().positions).toEqual({});
     await act(() => text().dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
     expect(text().getAttribute('contenteditable')).toBe('true');
+  });
+  it('resizes one block without changing the size or position of its row neighbor', async () => {
+    const page = host.querySelector('[data-preview-content]');
+    const emisor = host.querySelector('[data-rg-id="emisor"]');
+    const receptor = host.querySelector('[data-rg-id="receptor"]');
+    Object.defineProperty(page, 'offsetWidth', { configurable: true, value: 816 });
+    page.getBoundingClientRect = () => ({ left: 0, top: 0, right: 816, bottom: 1056, width: 816, height: 1056 });
+    emisor.getBoundingClientRect = () => ({ left: 20, top: 300, right: 400, bottom: 500, width: 380, height: 200 });
+    receptor.getBoundingClientRect = () => ({ left: 408, top: 300, right: 788, bottom: 500, width: 380, height: 200 });
+    const receptorBefore = receptor.getBoundingClientRect();
+    const handle = emisor.querySelector('[data-resize="e"]');
+    await act(() => handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0, clientX: 400, clientY: 400 })));
+    await act(() => window.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true, clientX: 500, clientY: 400 })));
+    expect(emisor.style.width).toBe('480px');
+    expect(receptor.style.width).toBe('');
+    expect(receptor.getBoundingClientRect()).toEqual(receptorBefore);
+    await act(() => window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 500, clientY: 400 })));
+    expect(useConfigStore.getState().overrides.emisor.width).toBe('480px');
+    expect(useConfigStore.getState().overrides.receptor).toBeUndefined();
   });
   it('saves double-click editing, survives hover and supports undo/redo', async () => {
     const original = text().textContent;

@@ -12,7 +12,7 @@ export default function AdendaConfig() {
 
   if (!currentConfig) return null;
 
-  const fields = currentConfig.adendaFields || [];
+  const fields = (currentConfig.adendaFields || []).filter((field) => field.addedByUser);
 
   const updateFields = (next) => {
     setCurrentConfig({ ...currentConfig, adendaFields: next });
@@ -22,7 +22,7 @@ export default function AdendaConfig() {
     const name = newName.trim();
     if (!name) return;
     const label = newLabel.trim() || name;
-    updateFields([...fields, { id: name, label, required: false }]);
+    updateFields([...fields, { id: name, label, required: false, addedByUser: true }]);
     setNewName('');
     setNewLabel('');
   };
@@ -53,7 +53,7 @@ export default function AdendaConfig() {
         Datos Adicionales
       </h3>
       <p className="text-xs text-gray-500">
-        Los campos se cargan desde el XML. Podés editarlos, agregarlos o eliminarlos.
+        Agregá únicamente los campos que querés mostrar. Si existen en el XML, se usa su valor.
       </p>
 
       {fields.length === 0 && (

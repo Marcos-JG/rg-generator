@@ -10,6 +10,7 @@ import useColumnResize from './useColumnResize';
 import { buildPreviewHtml } from './buildPreviewHtml';
 import StylePanel from './PreviewToolbar';
 import { editableHtml, applySelection } from '../../core/editableHtml';
+import { documentCss } from '../../core/documentCss';
 
 export default function InteractivePreview() {
   const { xmlString, currentConfig, userStyle, customXslt, docTitle, overrides, setOverrides, textOverrides, positions, setPosition } = useConfigStore();
@@ -40,7 +41,7 @@ export default function InteractivePreview() {
   };
 
   if (!xmlString || !currentConfig) {
-    return <div className="h-full flex items-center justify-center text-gray-400"><p>Sube un XML para ver el preview</p></div>;
+    return <div className="studio-empty"><div className="empty-paper" aria-hidden="true"><svg viewBox="0 0 64 80" fill="none"><rect x="1" y="1" width="62" height="78" rx="7" stroke="currentColor"/><path d="M16 23h32M16 32h23M16 48h32M16 57h32" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg></div><span className="empty-eyebrow">TU ESPACIO CREATIVO</span><h2>Cada detalle, a tu manera.</h2><p>Abre el menú ☰ y elige Documento para importar un XML.<br/>Después, mueve, ajusta y da forma a tus ideas.</p><div className="empty-features"><span>Edición libre</span><span>Guardado local</span><span>Exportación</span></div></div>;
   }
 
   let xmlData = null;
@@ -83,22 +84,30 @@ export default function InteractivePreview() {
   }
 
   return (
-    <div className="h-full overflow-auto bg-gray-100 p-4 relative">
-      {active && <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
-        <label className="flex items-center gap-2">Arrastrar
+    <div className="studio-canvas h-full overflow-auto p-4 relative">
+      {active && <div className="studio-canvas-toolbar flex items-center gap-1 text-xs" role="toolbar" aria-label="Herramientas del lienzo">
+        <label className="canvas-mode">
+          <span className="sr-only">Arrastrar</span>
           <select aria-label="Modo de movimiento" className="rounded border bg-white px-2 py-2" value={moveMode} onChange={e => { setMoveMode(e.target.value); setSelected(''); }}>
             <option value="elements">Campos libremente</option>
             <option value="blocks">Bloques completos</option>
             <option value="reorder">Reordenar filas</option>
           </select>
         </label>
-        <button className="rounded border bg-white px-3 py-2 disabled:opacity-40" disabled={!canUndo} onClick={applyUndo}>Deshacer</button>
-        <button className="rounded border bg-white px-3 py-2 disabled:opacity-40" disabled={!canRedo} onClick={applyRedo}>Rehacer</button>
-        {selected && positions[selected] && <button className="rounded border bg-white px-3 py-2" onClick={() => setPosition(selected, { x: 0, y: 0, z: positions[selected].z })}>Restablecer posición</button>}
-        <span className="text-gray-500">Arrastra para mover · Flechas para ajustar · Esc cancela · Doble clic edita</span>
-        <span className="ml-auto text-gray-500">Guardado automático en este navegador</span>
+        <span className="canvas-toolbar-divider" aria-hidden="true" />
+        <button className="canvas-icon-button" title="Deshacer" aria-label="Deshacer" disabled={!canUndo} onClick={applyUndo}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5M5 12h8a6 6 0 0 1 6 6"/></svg>
+        </button>
+        <button className="canvas-icon-button" title="Rehacer" aria-label="Rehacer" disabled={!canRedo} onClick={applyRedo}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 5 5-5 5m4-5h-8a6 6 0 0 0-6 6"/></svg>
+        </button>
+        {selected && positions[selected] && <button className="canvas-icon-button" title="Restablecer posición" aria-label="Restablecer posición" onClick={() => setPosition(selected, { x: 0, y: 0, z: positions[selected].z })}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v6h6M5.5 15a7 7 0 1 0 .2-6.2L4 10"/></svg>
+        </button>}
+        <span className="canvas-saved" title="Los cambios se guardan automáticamente" aria-label="Guardado automático activo" />
       </div>}
       <style>{`
+        ${documentCss('[data-preview-content]')}
         [data-preview-content] {
           font-family: Arial, sans-serif;
           font-size: 7pt;
@@ -144,8 +153,6 @@ export default function InteractivePreview() {
             setOverrides((prev) => {
               const next = { ...prev };
               delete next[selected];
-              const prefix = selected.replace(/^(section-|)/, (m) => m ? '' : 'section-');
-              delete next[prefix];
               return next;
             });
             setRenderKey((k) => k + 1);
@@ -173,7 +180,7 @@ export default function InteractivePreview() {
         className="bg-white shadow-lg"
         data-preview-content
         data-move-mode={moveMode}
-        style={{ width: '8.5in', height: '11in', margin: '0 auto', padding: '0.25in', boxSizing: 'border-box', position: 'relative', overflow: 'hidden', cursor: 'default' }}
+        style={{ width: '8.5in', minHeight: '11in', height: 'auto', margin: '0 auto', padding: '0.25in', boxSizing: 'border-box', position: 'relative', overflow: 'visible', cursor: 'default' }}
         html={html}
         onClick={handleContainerClick}
         onDoubleClick={onDblClick}

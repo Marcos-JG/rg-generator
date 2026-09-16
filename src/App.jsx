@@ -11,33 +11,54 @@ import FooterConfig from './components/ConfigPanel/FooterConfig';
 import AdendaConfig from './components/ConfigPanel/AdendaConfig';
 import InteractivePreview from './components/Preview/InteractivePreview';
 import DownloadButton from './components/Preview/DownloadButton';
-import { useConfigStore } from './stores/configStore';
+import { useEffect, useRef, useState } from 'react';
 
 export default function App() {
-  const metadata = useConfigStore((s) => s.metadata);
+  const [panel, setPanel] = useState('documento');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButton = useRef(null);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = e => {
+      if (e.key === 'Escape') {
+        setMenuOpen(false);
+        menuButton.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [menuOpen]);
 
   return (
-    <div className="h-screen flex flex-col bg-white">
-      <Header />
+    <div className="studio-shell h-screen flex flex-col">
+      <Header menuOpen={menuOpen} onToggleMenu={() => setMenuOpen(open => !open)} menuButton={menuButton} />
 
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar>
+        <div id="studio-menu" className="studio-menu" hidden={!menuOpen}>
+        <Sidebar panel={panel} onPanelChange={setPanel}>
+          <div hidden={panel !== 'documento'} className="inspector-group">
           <XmlUploader />
           <DocInfo />
           <VersionSelect />
+          </div>
+          <div hidden={panel !== 'contenido'} className="inspector-group">
           <FieldToggles />
           <ColumnConfig />
-          <LayoutConfig />
-          <StyleConfig />
           <AdendaConfig />
           <FooterConfig />
+          </div>
+          <div hidden={panel !== 'diseno'} className="inspector-group">
+          <StyleConfig />
+          <LayoutConfig />
+          </div>
         </Sidebar>
+        </div>
 
-        <main className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-auto border-b border-gray-200">
+        <main className="studio-workspace flex-1 min-w-0 flex flex-col overflow-hidden relative" aria-label="Área de edición">
+          <div className="flex-1 min-h-0 overflow-auto">
             <InteractivePreview />
           </div>
-          <div className="p-3 bg-gray-50 border-t border-gray-200">
+          <div className="studio-export">
             <DownloadButton />
           </div>
         </main>

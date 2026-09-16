@@ -27,11 +27,13 @@ export default function useResize(containerRef, overrides, setOverrides, renderK
       const sectionName = section.getAttribute('data-drag-section');
       const rgId = dir === 'row'
         ? (handle.closest('[data-field-id]')?.getAttribute('data-field-id') || '')
-        : 'section-' + sectionName;
+        : sectionName;
       if (!rgId) return;
 
       const targetEl = dir === 'row' ? handle.closest('[data-field-id]') : section;
       const rect = targetEl.getBoundingClientRect();
+      const pageRect = el.getBoundingClientRect();
+      const scale = pageRect.width / (el.offsetWidth || pageRect.width || 1) || 1;
 
       el.querySelectorAll('[draggable="true"]').forEach(n => {
         n.setAttribute('draggable', 'false');
@@ -41,30 +43,12 @@ export default function useResize(containerRef, overrides, setOverrides, renderK
       const prevOv = overrides[rgId] || {};
       const startPad = parseFloat(prevOv.paddingTop) || 0;
 
-      const cs = getComputedStyle(el);
-      const padL = parseFloat(cs.paddingLeft) || 0;
-      const padR = parseFloat(cs.paddingRight) || 0;
-      const padT = parseFloat(cs.paddingTop) || 0;
-      const padB = parseFloat(cs.paddingBottom) || 0;
-
-      const row = section.parentElement;
-      const rowSiblings = row ? Array.from(row.children).filter(c => c.hasAttribute('data-drag-section') && c !== section) : [];
-      const sibCount = rowSiblings.length;
-      const sibRgIds = rowSiblings.map(c => 'section-' + c.getAttribute('data-drag-section'));
-      const rowGap = 8;
-      const sibMinW = 50;
-      const contentW = el.clientWidth - padL - padR;
-      const isFirst = section === row.firstElementChild;
-
       state.current = {
         dir, rgId, startX: e.clientX, startY: e.clientY,
-        startW: rect.width, startH: rect.height,
-        offLeft: section.offsetLeft, offTop: section.offsetTop,
-        maxW: el.clientWidth, maxH: el.clientHeight,
-        padL, padR, padT, padB,
-        contentW, isFirst,
-        sibCount, rowGap, sibMinW,
-        sibRgIds, rowSiblings,
+        startW: rect.width / scale, startH: rect.height / scale,
+        scale,
+        maxIndependentWidth: (pageRect.right - rect.left) / scale,
+        maxIndependentHeight: (pageRect.bottom - rect.top) / scale,
         el: targetEl, startPad,
       };
 
@@ -81,9 +65,9 @@ export default function useResize(containerRef, overrides, setOverrides, renderK
       if (!state.current) return;
       e.preventDefault();
 
-      const { dir, startX, startY, startW, startH, offLeft, offTop, maxH, padL, padR, padT, padB, contentW, isFirst, sibCount, rowGap, sibMinW, rowSiblings, startPad, el: sectionEl } = state.current;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
+      const { dir, startX, startY, startW, startH, maxIndependentWidth, maxIndependentHeight, scale, startPad, el: sectionEl } = state.current;
+      const dx = (e.clientX - startX) / scale;
+      const dy = (e.clientY - startY) / scale;
 
       const clamp = (v, min, max) => Math.min(Math.max(v, min), Math.max(min, max));
 
@@ -95,64 +79,17 @@ export default function useResize(containerRef, overrides, setOverrides, renderK
           cell.style.paddingBottom = pad + 'px';
         });
         sectionEl.style.flex = 'none';
-      } else if (dir === 'e' || dir === 'he') {
-        // Right border of this section.
-        const totalGap = sibCount * rowGap;
-        const totalSibMin = sibCount * sibMinW;
-        const maxTarget = contentW - totalSibMin - totalGap;
-        if (isFirst && sibCount > 0) {
-          // Shared border with the next sibling: move both to keep sum = contentW
-          const w = clamp(startW + dx, sibMinW, maxTarget);
-          sectionEl.style.flex = 'none';
-          sectionEl.style.width = w + 'px';
-          const sibW = clamp(contentW - w - totalGap, sibMinW, maxTarget);
-          rowSiblings[0].style.flex = 'none';
-          rowSiblings[0].style.width = sibW + 'px';
-           } else {
-          // Last section; right border is page edge. Move both so sum stays = contentW.
-          const w = clamp(startW + dx, sibMinW, maxTarget);
-          sectionEl.style.flex = 'none';
-          sectionEl.style.width = w + 'px';
-          if (sibCount > 0) {
-            const sibW = clamp(contentW - w - totalGap, sibMinW, maxTarget);
-            rowSiblings[0].style.flex = 'none';
-            rowSiblings[0].style.width = sibW + 'px';
-          }
-        }
+      } else if (dir === 'e') {
+        sectionEl.style.width = clamp(startW + dx, 20, maxIndependentWidth) + 'px';
       } else if (dir === 'w') {
-        // Left border of this section.
-        const totalGap = sibCount * rowGap;
-        const totalSibMin = sibCount * sibMinW;
-        const maxTarget = contentW - totalSibMin - totalGap;
-        if (!isFirst && sibCount > 0) {
-          // Shared border with the previous sibling: move previous inverse
-          const w = clamp(startW - dx, sibMinW, maxTarget);
-          sectionEl.style.flex = 'none';
-          sectionEl.style.width = w + 'px';
-          const sibW = clamp(contentW - w - totalGap, sibMinW, maxTarget);
-          rowSiblings[0].style.flex = 'none';
-          rowSiblings[0].style.width = sibW + 'px';
-        } else {
-          // First section; left border is page edge -> cannot grow left, only shrink.
-          // Shrinking redistributes to the sibling so the row stays full.
-          const w = clamp(startW - dx, sibMinW, contentW - (sibCount * sibMinW) - totalGap);
-          sectionEl.style.flex = 'none';
-          sectionEl.style.width = w + 'px';
-          if (sibCount > 0) {
-            const sibW = clamp(contentW - w - totalGap, sibMinW, maxTarget);
-            rowSiblings[0].style.flex = 'none';
-            rowSiblings[0].style.width = sibW + 'px';
-          }
-        }
-      } else if (dir === 'h' || dir === 'he') {
-        const maxBottom = maxH - padB;
-        const h = clamp(startH + dy, 20, maxBottom - offTop);
-        sectionEl.style.height = h + 'px';
+        sectionEl.style.width = clamp(startW - dx, 20, maxIndependentWidth) + 'px';
+      } else if (dir === 'h') {
+        sectionEl.style.height = clamp(startH + dy, 20, maxIndependentHeight) + 'px';
       } else if (dir === 'n') {
-        const minTop = padT;
-        const maxHNorth = offTop + startH - minTop;
-        const h = clamp(startH - dy, 20, maxHNorth);
-        sectionEl.style.height = h + 'px';
+        sectionEl.style.height = clamp(startH - dy, 20, maxIndependentHeight) + 'px';
+      } else if (dir === 'he') {
+        sectionEl.style.width = clamp(startW + dx, 20, maxIndependentWidth) + 'px';
+        sectionEl.style.height = clamp(startH + dy, 20, maxIndependentHeight) + 'px';
       }
 
       sectionEl.style.flex = 'none';
@@ -161,7 +98,7 @@ export default function useResize(containerRef, overrides, setOverrides, renderK
     const onMouseUp = () => {
       if (!state.current) return;
 
-      const { dir, rgId, startPad, el: sectionEl, sibRgIds, rowSiblings } = state.current;
+      const { dir, rgId, startPad, el: sectionEl } = state.current;
       const w = sectionEl.style.width;
       const h = sectionEl.style.height;
 
@@ -181,17 +118,7 @@ export default function useResize(containerRef, overrides, setOverrides, renderK
           next.paddingTop = rowPad;
           next.paddingBottom = rowPad;
         }
-        const updated = { ...prev, [rgId]: next };
-        if ((dir === 'e' || dir === 'w') && sibRgIds) {
-          sibRgIds.forEach((sibRid, i) => {
-            const sibEl = rowSiblings[i];
-            if (sibEl && sibEl.style.width) {
-              const sibOv = { ...(updated[sibRid] || {}), width: sibEl.style.width };
-              updated[sibRid] = sibOv;
-            }
-          });
-        }
-        return updated;
+        return { ...prev, [rgId]: next };
       });
 
       setRenderKey((k) => k + 1);

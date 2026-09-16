@@ -1,7 +1,7 @@
 import { cssStr } from './helpers';
 import { buildFooterText } from '../../core/svFormat';
 
-export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides, selected, hovered, docTitle }) {
+export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides, selected, hovered, docTitle, bindings = {} }) {
   const s = { ...currentConfig.style, ...userStyle };
   const cls = (name, rgId) => {
     let c = name;
@@ -24,6 +24,24 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     return merged;
   };
 
+  const buildBlockOuter = (id, baseStyles) => {
+    const ov = overrides[id] || {};
+    const merged = { ...baseStyles };
+    if (ov.width) merged.width = ov.width;
+    if (ov.height) merged.height = ov.height;
+    if (ov.width || ov.height) {
+      merged.flex = 'none';
+      delete merged.minWidth;
+      delete merged.minHeight;
+    }
+    return merged;
+  };
+
+  const buildBlockContent = (id, baseStyles) => {
+    const { width: _width, height: _height, labelWidth: _labelWidth, ...visual } = overrides[id] || {};
+    return { ...baseStyles, ...visual };
+  };
+
 
   const sectionVerticalSpacing = (rid, sectionKey) => {
     const self = overrides[rid] || {};
@@ -40,10 +58,10 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
 
   const labelWidthFor = (rid) => {
     let sectionKey;
-    if (rid.startsWith('seller-')) sectionKey = 'section-emisor';
-    else if (rid.startsWith('buyer-')) sectionKey = 'section-receptor';
-    else if (rid.startsWith('total-')) sectionKey = 'section-totals';
-    else sectionKey = 'section-datos-adicionales';
+    if (rid.startsWith('seller-')) sectionKey = 'emisor';
+    else if (rid.startsWith('buyer-')) sectionKey = 'receptor';
+    else if (rid.startsWith('total-')) sectionKey = 'totals';
+    else sectionKey = 'datos-adicionales';
     return overrides[sectionKey]?.labelWidth || '35%';
   };
 
@@ -89,13 +107,16 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
   };
   const sellerRows = emisorFieldOrder.map(id => emisorRowMap[id]).filter(Boolean).join('');
 
-  const receptorFieldOrder = currentConfig.fieldOrders?.buyer || ['buyer-name', 'buyer-taxidtype', 'buyer-nit', 'buyer-nrc', 'buyer-address', 'buyer-email'];
+  const receptorFieldOrder = currentConfig.fieldOrders?.buyer || ['buyer-name', 'buyer-taxidtype', 'buyer-nit', 'buyer-nrc', 'buyer-actividad', 'buyer-address', 'buyer-phone', 'buyer-email'];
   const receptorRowMap = {
     'buyer-name': mkRow('buyer-name', 'Nombre o Razón Social:', xmlData?.buyer?.Name),
     'buyer-taxidtype': mkRow('buyer-taxidtype', 'Tipo Doc. Identificación:', xmlData?.buyer?.TaxIDType),
     'buyer-nit': mkRow('buyer-nit', 'NIT:', xmlData?.buyer?.TaxID),
     'buyer-nrc': mkRow('buyer-nrc', 'NRC:', xmlData?.buyer?.NRC),
+    'buyer-actividad': mkRow('buyer-actividad', 'Actividad Económica:', xmlData?.buyer?.CodigoActividad && xmlData?.buyer?.DescActividad
+      ? `${xmlData.buyer.CodigoActividad} – ${xmlData.buyer.DescActividad}` : xmlData?.buyer?.DescActividad),
     'buyer-address': mkRow('buyer-address', 'Dirección:', xmlData?.buyer?.Address),
+    'buyer-phone': mkRow('buyer-phone', 'Teléfono:', xmlData?.buyer?.Phone),
     'buyer-email': mkRow('buyer-email', 'Correo Electrónico:', xmlData?.buyer?.Email),
   };
   const buyerRows = receptorFieldOrder.map(id => receptorRowMap[id]).filter(Boolean).join('');
@@ -119,16 +140,16 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     }).join('');
 
   const issuedDate = xmlData?.header?.IssuedDateTime || '';
-  const formattedDate = issuedDate
+  const formattedDate = bindings.date || (issuedDate
     ? `${issuedDate.substring(8, 10)}-${issuedDate.substring(5, 7)}-${issuedDate.substring(0, 4)}`
-    : '[Fecha Emisión]';
-  const formattedTime = issuedDate ? issuedDate.substring(11, 19) : '';
+    : '[Fecha Emisión]');
+  const formattedTime = bindings.time || (issuedDate ? issuedDate.substring(11, 19) : '');
   const controlNumber = xmlData?.header?.DocType && xmlData?.header?.CodEstPuntoV && xmlData?.header?.Secuencial
     ? `DTE-${xmlData.header.DocType}-${xmlData.header.CodEstPuntoV}-${xmlData.header.Secuencial}`
     : '';
   const numControl = xmlData?.items?.length ? controlNumber : '[Num. Control]';
 
-  const fmtMoney = (v) => { const n = parseFloat(v); return isNaN(n) || n === 0 ? null : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  const fmtMoney = bindings.money || ((v) => { const n = parseFloat(v); return isNaN(n) || n === 0 ? null : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); });
 
   const TOTALS_MAP = {
     VENTA_GRAVADA: xmlData?.totals?.TOTAL_GRAVADA,
@@ -168,21 +189,29 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     </tr>`;
   };
 
-  const totalsHtml = totalsFieldOrder
+  const taxRows = (xmlData?.taxes || []).filter((tax) => tax.code !== '20').map((tax, index) => {
+    const rid = `total-tax-${tax.code || index}`;
+    const label = tax.description || `Impuesto ${tax.code || ''}`;
+    return `<tr data-rg-id="${rid}" data-field-id="${rid}" draggable="true" class="field-draggable total-row">
+      <td style="font-weight:bold;padding:4px 8px;border:1px solid ${s.colorBorder}">${label}:</td>
+      <td style="text-align:right;padding:4px 8px;border:1px solid ${s.colorBorder}">${fmtMoney(tax.amount) || '0.00'}</td>
+    </tr>`;
+  }).join('');
+  const totalsHtml = taxRows + totalsFieldOrder
     .map(id => totalsFieldMap[id])
     .filter((f) => f && (f.required || fmtMoney(TOTALS_MAP[f.id]) !== null))
     .map((f) => totalRow(f))
     .join('');
 
-  const logoUrl = xmlData?.seller?.TaxID
+  const logoUrl = bindings.logo || (xmlData?.seller?.TaxID
     ? `https://digifact-logo.s3.amazonaws.com/SV/logo/${xmlData.seller.TaxID}.jpg`
-    : '';
+    : '');
 
   const qrGuid = xmlData?.header?.GUID || '';
-  const qrAmbiente = xmlData?.items?.length ? '00' : '';
+  const qrAmbiente = xmlData?.header?.AdditionalIssueType || '';
   const qrFecha = issuedDate ? issuedDate.substring(0, 10) : '';
   const qrSite = qrGuid ? `https://admin.factura.gob.sv/consultaPublica?ambiente=${qrAmbiente}%7CcodGen=${qrGuid}%7CfechaEmi=${qrFecha}` : '';
-  const qrUrl = qrSite ? `https://cert.digifact.com.sv/QRService/api/QR?data=${encodeURIComponent(qrSite)}&size=100x100` : '';
+  const qrUrl = bindings.qr || (qrSite ? `https://cert.digifact.com.sv/QRService/api/QR?data=${encodeURIComponent(qrSite)}&size=100x100` : '');
 
   const makeItemRows = () => {
     const src = xmlData?.items || [];
@@ -196,7 +225,7 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
           ...(isNum ? { textAlign: 'right' } : {}),
           fontSize: s.fontSize,
         });
-        let v = c.id === 'Number' ? String(i + 1) : item?.[c.id] || '-';
+        let v = c.id === 'Number' ? (bindings.itemNumber || String(i + 1)) : item?.[c.id] || '-';
         return `<td data-rg-id="${rid}" style="${cssStr(st)}">${v}</td>`;
       }).join('');
       return `<tr>${cells}</tr>`;
@@ -211,67 +240,115 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     <div data-resize="h" draggable="false" style="position:absolute;bottom:0;left:0;width:100%;height:6px;cursor:ns-resize;z-index:20;pointer-events:auto"></div>
     <div data-resize="he" draggable="false" style="position:absolute;bottom:0;right:0;width:12px;height:12px;cursor:nwse-resize;z-index:20;pointer-events:auto"></div>`;
 
+  const infoBlock = (id, title, body) => !body ? '' : `<div data-rg-id="${id}" data-drag-section="${id}" class="${cls('section', id)}" draggable="true"
+    style="${cssStr(buildBlockOuter(id, sectionOuterStyle({ marginBottom: '10px' })))}">
+    ${sectionHandles()}
+    <div class="section-content" style="${cssStr(buildBlockContent(id, { border: `1px solid ${s.colorBorder}`, borderRadius: '5px', padding: '5px', boxSizing: 'border-box' }))}">
+      ${title ? `<div style="text-align:center;font-weight:bold;margin-bottom:4px">${title}</div>` : ''}${body}
+    </div>
+  </div>`;
+
+  const relatedRows = (xmlData?.relatedDocuments || []).map((doc) => `<tr>
+    <td style="border:1px solid ${s.colorBorder};padding:4px">${doc.TipoDocumento || ''}</td>
+    <td style="border:1px solid ${s.colorBorder};padding:4px">${doc.NumDocumento || ''}</td>
+    <td style="border:1px solid ${s.colorBorder};padding:4px">${doc.FechaEmision || ''}</td>
+  </tr>`).join('');
+  const relatedHtml = relatedRows ? infoBlock('documentos-relacionados', 'DOCUMENTOS RELACIONADOS', `<table width="100%" style="border-collapse:collapse"><thead><tr>
+    <th style="border:1px solid ${s.colorBorder};padding:4px">Tipo de Documento</th><th style="border:1px solid ${s.colorBorder};padding:4px">No. de Documento</th><th style="border:1px solid ${s.colorBorder};padding:4px">Fecha de Documento</th>
+  </tr></thead><tbody>${relatedRows}</tbody></table>`) : '';
+
+  const otherRows = (xmlData?.otherDocuments || []).map((doc) => `<tr>
+    <td style="border:1px solid ${s.colorBorder};padding:4px">${doc.CodigoDocAsociado || ''}</td><td style="border:1px solid ${s.colorBorder};padding:4px">${doc.DescDoc || ''}</td>
+  </tr>`).join('');
+  const otherHtml = otherRows ? infoBlock('otros-documentos', 'OTROS DOCUMENTOS ASOCIADOS', `<table width="100%" style="border-collapse:collapse"><thead><tr>
+    <th style="border:1px solid ${s.colorBorder};padding:4px">Identificación del Documento</th><th style="border:1px solid ${s.colorBorder};padding:4px">Descripción</th>
+  </tr></thead><tbody>${otherRows}</tbody></table>`) : '';
+
+  const appendixLabels = {
+    REFERENCIA_INTERNA: 'Referencia interna', ReferenciaInterna: 'Referencia interna',
+    CodigoVendedor: 'Vendedor', Vendedor: 'Vendedor',
+    CodigoCliente: 'Código de cliente', CondicionPago: 'Condición de pago',
+    FechaVencimiento: 'Fecha de vencimiento', OBSERVACIONES: 'Observaciones',
+    Num_OrdenCompra: 'Orden de compra', OrdenCompra: 'Orden de compra', ORDEN_COMPRA: 'Orden de compra',
+    NotaEntrega: 'Nota de entrega', NOTA_ENTREGA: 'Nota de entrega',
+  };
+  const responsibleNames = new Set(['NombreEntrega', 'DocuEntrega', 'NombreRecibe', 'DocuRecibe']);
+  const appendixRows = (xmlData?.appendix || []).filter((item) => item.value?.trim() && !responsibleNames.has(item.name)).map((item) => {
+    const compactName = item.name.replace(/\s+/g, '');
+    const label = appendixLabels[item.name] || appendixLabels[compactName] || item.name.replaceAll('_', ' ');
+    return `<tr><td style="font-weight:bold;width:25%;padding:2px 4px">${label}:</td><td style="padding:2px 4px">${item.value}</td></tr>`;
+  }).join('');
+  const appendixHtml = appendixRows ? infoBlock('apendice', 'INFORMACIÓN ADICIONAL', `<table width="100%"><tbody>${appendixRows}</tbody></table>`) : '';
+  const resp = xmlData?.responsible || {};
+  const responsibleRows = [
+    ['Responsable por parte del emisor:', resp.NombreEntrega, resp.DocuEntrega],
+    ['Responsable por parte del receptor:', resp.NombreRecibe, resp.DocuRecibe],
+  ].filter(([, name, document]) => name || document).map(([label, name, document]) => `<tr><td style="font-weight:bold;padding:3px 4px">${label}</td><td style="padding:3px 4px">${name || ''}</td><td style="font-weight:bold;padding:3px 4px">No. de Documento:</td><td style="padding:3px 4px">${document || ''}</td></tr>`).join('');
+  const generalObservation = xmlData?.generalObservations ? `<tr><td style="font-weight:bold;padding:3px 4px">Observación General:</td><td colspan="3" style="padding:3px 4px">${xmlData.generalObservations}</td></tr>` : '';
+  const responsibleHtml = responsibleRows || generalObservation ? infoBlock('responsables', '', `<table width="100%"><tbody>${responsibleRows}${generalObservation}</tbody></table>`) : '';
+
   const renderSection = (sec) => {
     if (sec === 'emisor') {
-      const emisorSt = buildWithOverrides('section-emisor', sectionOuterStyle());
-      const emisorInnerMerged = buildWithOverrides('emisor', { height: '100%', width: '100%', boxSizing: 'border-box' });
+      const emisorSt = buildBlockOuter('emisor', sectionOuterStyle());
+      const emisorInnerMerged = buildBlockContent('emisor', { height: '100%', width: '100%', boxSizing: 'border-box' });
       delete emisorInnerMerged.marginTop;
       delete emisorInnerMerged.marginBottom;
       delete emisorInnerMerged.separationX;
       delete emisorInnerMerged.separationY;
       const emisorInnerSt = emisorInnerMerged;
       const emisorHandles = sectionHandles();
-      return `<div data-rg-id="section-emisor" data-drag-section="emisor" class="${cls('section', 'section-emisor')}" draggable="true"
+      return `<div data-rg-id="emisor" data-drag-section="emisor" class="${cls('section', 'emisor')}" draggable="true"
         style="${cssStr(emisorSt)}">
         ${emisorHandles}
-        <div data-rg-id="emisor" class="${cls('section', 'emisor')}" style="${cssStr(emisorInnerSt)}">
+        <div class="section-content" style="${cssStr(emisorInnerSt)}">
           <div style="text-align:center;font-weight:bold;margin-bottom:4px">EMISOR</div>
-          <div data-rg-id="section-seller" class="${cls('section', 'section-seller')}" style="border:1px solid ${s.colorBorder};border-radius:5px;height:calc(100% - 24px);box-sizing:border-box">
+          <div class="section-seller" style="border:1px solid ${s.colorBorder};border-radius:5px;height:calc(100% - 24px);box-sizing:border-box">
             <table width="100%" height="100%" cellPadding="0" cellSpacing="0" border="0">${sellerRows}</table>
           </div>
         </div>
       </div>`;
     }
     if (sec === 'receptor') {
-      const receptorSt = buildWithOverrides('section-receptor', sectionOuterStyle());
-      const receptorInnerMerged = buildWithOverrides('receptor', { height: '100%', width: '100%', boxSizing: 'border-box' });
+      const receptorSt = buildBlockOuter('receptor', sectionOuterStyle());
+      const receptorInnerMerged = buildBlockContent('receptor', { height: '100%', width: '100%', boxSizing: 'border-box' });
       delete receptorInnerMerged.marginTop;
       delete receptorInnerMerged.marginBottom;
       delete receptorInnerMerged.separationX;
       delete receptorInnerMerged.separationY;
       const receptorInnerSt = receptorInnerMerged;
       const receptorHandles = sectionHandles();
-      return `<div data-rg-id="section-receptor" data-drag-section="receptor" class="${cls('section', 'section-receptor')}" draggable="true"
+      return `<div data-rg-id="receptor" data-drag-section="receptor" class="${cls('section', 'receptor')}" draggable="true"
         style="${cssStr(receptorSt)}">
         ${receptorHandles}
-        <div data-rg-id="receptor" class="${cls('section', 'receptor')}" style="${cssStr(receptorInnerSt)}">
+        <div class="section-content" style="${cssStr(receptorInnerSt)}">
           <div style="text-align:center;font-weight:bold;margin-bottom:4px">RECEPTOR</div>
-          <div data-rg-id="section-buyer" class="${cls('section', 'section-buyer')}" style="border:1px solid ${s.colorBorder};border-radius:5px;height:calc(100% - 24px);box-sizing:border-box">
+          <div class="section-buyer" style="border:1px solid ${s.colorBorder};border-radius:5px;height:calc(100% - 24px);box-sizing:border-box">
             <table width="100%" height="100%" cellPadding="0" cellSpacing="0" border="0">${buyerRows}</table>
           </div>
         </div>
       </div>`;
     }
     if (sec === 'items') {
-      const itemsSt = buildWithOverrides('section-items', sectionOuterStyle());
+      const itemsSt = buildBlockOuter('items', sectionOuterStyle());
+      const itemsInnerSt = buildBlockContent('items', { width: '100%', height: '100%', borderCollapse: 'collapse' });
       const itemsHandles = sectionHandles();
-      return `<div data-rg-id="section-items" data-drag-section="items" class="${cls('section', 'section-items')}" draggable="true"
+      return `<div data-rg-id="items" data-drag-section="items" class="${cls('section', 'items')}" draggable="true"
         style="${cssStr(itemsSt)}">
         ${itemsHandles}
-        <table data-rg-id="table-items" class="${cls('items-table', 'table-items')}" style="width:100%;height:100%;border-collapse:collapse">
+        <table class="items-table" style="${cssStr(itemsInnerSt)}">
           <thead><tr>${itemHdrs}</tr></thead>
           <tbody>${makeItemRows()}</tbody>
         </table>
       </div>`;
     }
     if (sec === 'totals' && totalsHtml) {
-      const totalsSt = buildWithOverrides('section-totals', sectionOuterStyle());
-      const totalsInnerSt = buildWithOverrides('totals', { height: '100%', width: '100%', boxSizing: 'border-box' });
+      const totalsSt = buildBlockOuter('totals', sectionOuterStyle());
+      const totalsInnerSt = buildBlockContent('totals', { height: '100%', width: '100%', boxSizing: 'border-box' });
       const totalsHandles = sectionHandles();
-      return `<div data-rg-id="section-totals" data-drag-section="totals" class="${cls('section', 'section-totals')}" draggable="true"
+      return `<div data-rg-id="totals" data-drag-section="totals" class="${cls('section', 'totals')}" draggable="true"
         style="${cssStr(totalsSt)}">
         ${totalsHandles}
-        <div data-rg-id="totals" class="${cls('totals-section', 'totals')}" style="${cssStr(totalsInnerSt)}">
+        <div class="totals-section" style="${cssStr(totalsInnerSt)}">
           <table class="totals-table" style="width:100%;height:100%;border-collapse:collapse">
             ${totalsHtml}
           </table>
@@ -279,8 +356,8 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
       </div>`;
     }
     if (sec === 'observaciones') {
-      const obsSt = buildWithOverrides('section-observaciones', sectionOuterStyle());
-      const obsInnerMerged = buildWithOverrides('observaciones', { height: '100%', width: '100%', boxSizing: 'border-box' });
+      const obsSt = buildBlockOuter('observaciones', sectionOuterStyle());
+      const obsInnerMerged = buildBlockContent('observaciones', { height: '100%', width: '100%', boxSizing: 'border-box' });
       delete obsInnerMerged.marginTop;
       delete obsInnerMerged.marginBottom;
       delete obsInnerMerged.separationX;
@@ -333,10 +410,10 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
         </div>`;
       };
       const justify = obsAlign === 'center' ? 'center' : obsAlign === 'right' ? 'flex-end' : 'flex-start';
-      return `<div data-rg-id="section-observaciones" data-drag-section="observaciones" class="${cls('section', 'section-observaciones')}" draggable="true"
+      return `<div data-rg-id="observaciones" data-drag-section="observaciones" class="${cls('section', 'observaciones')}" draggable="true"
         style="${cssStr(obsSt)}">
         ${obsHandles}
-        <div data-rg-id="observaciones" class="${cls('section', 'observaciones')}" style="${cssStr(obsInnerSt)}">
+        <div class="section-content" style="${cssStr(obsInnerSt)}">
           <div style="border:1px solid ${s.colorBorder};border-radius:5px;height:100%;box-sizing:border-box;display:flex;flex-direction:column;justify-content:${justify};${obsAlignCss}">
             ${orderedObs.map((f) => obsRow(f)).join('')}
           </div>
@@ -344,8 +421,8 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
       </div>`;
     }
     if (sec === 'datos-adicionales') {
-      const daSt = buildWithOverrides('section-datos-adicionales', sectionOuterStyle());
-      const daInnerMerged = buildWithOverrides('datos-adicionales', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' });
+      const daSt = buildBlockOuter('datos-adicionales', sectionOuterStyle());
+      const daInnerMerged = buildBlockContent('datos-adicionales', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' });
       delete daInnerMerged.marginTop;
       delete daInnerMerged.marginBottom;
       delete daInnerMerged.separationX;
@@ -355,17 +432,17 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
       const daAlign = overrides['datos-adicionales']?.textAlign;
       const daBoxAlign = daAlign ? `text-align:${daAlign};` : '';
       const daGap = overrides['datos-adicionales']?.gap ? `gap:${overrides['datos-adicionales'].gap};` : '';
-      const adendaFields = currentConfig.adendaFields?.length
-        ? currentConfig.adendaFields
-        : (xmlData?.adendaDefaults || []);
+      const adendaFields = (currentConfig.adendaFields || []).filter((field) => field.addedByUser);
       if (!adendaFields.length) return '';
       const daFields = adendaFields.map((f) => {
         if (!f) return null;
         const name = f.id || f.name;
-        return { field: f, name };
+        return { ...f, name };
       }).filter(Boolean);
-      const adendaOrder = (currentConfig.fieldOrders?.['datos-adicionales'] || daFields.map((f) => `da-${f.name}`))
+      const savedAdendaOrder = (currentConfig.fieldOrders?.['datos-adicionales'] || [])
         .map((id) => id.replace(/^da-/, ''));
+      const adendaOrder = [...savedAdendaOrder, ...daFields.map((f) => f.name)]
+        .filter((name, index, list) => list.indexOf(name) === index);
       const idToField = {};
       daFields.forEach((f) => { idToField[f.name] = f; });
       const orderedDaFields = adendaOrder.map((name) => idToField[name]).filter(Boolean);
@@ -396,10 +473,10 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
         <td style="${valCss}">${xmlData?.adenda?.[name] || `[${label}]`}</td>
       </tr>`;
       };
-      return `<div data-rg-id="section-datos-adicionales" data-drag-section="datos-adicionales" class="${cls('section', 'section-datos-adicionales')}" draggable="true"
+      return `<div data-rg-id="datos-adicionales" data-drag-section="datos-adicionales" class="${cls('section', 'datos-adicionales')}" draggable="true"
         style="${cssStr(daSt)}">
         ${daHandles}
-        <div data-rg-id="datos-adicionales" class="${cls('section', 'datos-adicionales')}" style="${cssStr(daInnerSt)}">
+        <div class="section-content" style="${cssStr(daInnerSt)}">
           <div style="border:1px solid ${s.colorBorder};border-radius:5px;height:100%;box-sizing:border-box;display:flex;flex-direction:column;padding:4px;${daBoxAlign}${daGap}">
             <table width="100%" cellPadding="0" cellSpacing="0" border="0">
               <tbody>
@@ -412,49 +489,53 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     }
     if (sec === 'footer') {
       const footerOv = overrides['footer'] || {};
-      const footerSt = buildWithOverrides('section-footer', sectionOuterStyle());
-      const footerInnerSt = buildWithOverrides('footer', { textAlign: footerOv.textAlign || 'center', paddingTop: '10px', paddingBottom: '10px', borderTop: `1px solid ${s.colorBorder}`, fontSize: '80%', color: '#666', height: '100%', boxSizing: 'border-box' });
+      const footerSt = buildBlockOuter('footer', sectionOuterStyle({ flex: 'none', marginTop: 'auto' }));
+      const footerInnerSt = buildBlockContent('footer', { textAlign: footerOv.textAlign || 'center', paddingTop: '10px', paddingBottom: '10px', borderTop: `1px solid ${s.colorBorder}`, fontSize: '80%', color: '#666', height: '100%', boxSizing: 'border-box' });
       const resizeHandles = sectionHandles();
-      return `<div data-rg-id="section-footer" data-drag-section="footer" class="${cls('section', 'section-footer')}" draggable="true"
+      return `<div data-rg-id="footer" class="${cls('section', 'footer')}"
         style="${cssStr(footerSt)}">
         ${resizeHandles}
-        <div data-rg-id="footer" class="${cls('footer', 'footer')}" style="${cssStr(footerInnerSt)}">
-          ${buildFooterText(xmlData, userStyle.footerText || 'DIGIFACT SERVICIOS, SOCIEDAD ANONIMA https://www.digifact.com.sv, NIT 0614-230822-102-5, NRC 318270-1')}
+        <div class="footer" style="${cssStr(footerInnerSt)}">
+          ${bindings.footer || buildFooterText(xmlData, userStyle.footerText || 'DIGIFACT SERVICIOS, SOCIEDAD ANONIMA https://www.digifact.com.sv, NIT 0614-230822-102-5, NRC 318270-1')}
         </div>
       </div>`;
     }
     return '';
   };
 
-  const layoutGrid = currentConfig.layoutGrid || [['emisor', 'receptor'], ['items'], ['totals', 'observaciones'], ['datos-adicionales'], ['footer']];
+  const layoutGrid = currentConfig.layoutGrid || [['emisor', 'receptor'], ['items'], ['totals', 'observaciones'], ['datos-adicionales']];
+  const bodyGrid = layoutGrid
+    .map(row => row.filter(section => section !== 'footer'))
+    .filter(row => row.length > 0);
 
-  const gridHtml = layoutGrid.map((row, rowIdx) => {
+  const gridHtml = bodyGrid.map((row, rowIdx) => {
     const cellsHtml = row.map(sec => renderSection(sec)).join('');
-    return `<div data-rg-id="grid-row-${rowIdx}" style="display:flex;gap:8px;margin-bottom:15px;align-items:flex-start;overflow:hidden">${cellsHtml}</div>`;
+    if (!cellsHtml) return '';
+    return `<div data-rg-id="grid-row-${rowIdx}" style="display:grid;grid-template-columns:repeat(${row.length},minmax(0,1fr));gap:8px;margin-bottom:15px;align-items:start;overflow:visible">${cellsHtml}</div>`;
   }).join('');
 
   const renderHeaderSection = (sec) => {
     if (sec === 'header-logo') {
-      const outerSt = buildWithOverrides('section-header-logo', sectionOuterStyle());
-      const innerSt = buildWithOverrides('header-logo', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', alignItems: 'center' });
+      const outerSt = buildBlockOuter('header-logo', sectionOuterStyle());
+      const innerSt = buildBlockContent('header-logo', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', alignItems: 'center' });
       const handles = sectionHandles();
-      return `<div data-rg-id="section-header-logo" data-drag-section="header-logo" class="${cls('section', 'section-header-logo')}" draggable="true"
+      return `<div data-rg-id="header-logo" data-drag-section="header-logo" class="${cls('section', 'header-logo')}" draggable="true"
         style="${cssStr(outerSt)}">
         ${handles}
-        <div data-rg-id="header-logo" class="${cls('section', 'header-logo')}" style="${cssStr(innerSt)}">
+        <div class="section-content" style="${cssStr(innerSt)}">
           ${logoUrl ? `<img src="${logoUrl}" width="150" alt="[logo]" style="display:block" />` : '<div style="width:150px;height:60px;border:1px dashed #ccc;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px">Logo</div>'}
         </div>
       </div>`;
     }
     if (sec === 'header-ids') {
-      const outerSt = buildWithOverrides('section-header-ids', sectionOuterStyle());
-      const innerSt = buildWithOverrides('header-ids', { height: '100%', width: '100%', boxSizing: 'border-box' });
+      const outerSt = buildBlockOuter('header-ids', sectionOuterStyle());
+      const innerSt = buildBlockContent('header-ids', { height: '100%', width: '100%', boxSizing: 'border-box' });
       const handles = sectionHandles();
-      return `<div data-rg-id="section-header-ids" data-drag-section="header-ids" class="${cls('section', 'section-header-ids')}" draggable="true"
+      return `<div data-rg-id="header-ids" data-drag-section="header-ids" class="${cls('section', 'header-ids')}" draggable="true"
         style="${cssStr(outerSt)}">
         ${handles}
-        <div data-rg-id="header-ids" class="${cls('section', 'header-ids')}" style="${cssStr(innerSt)}">
-          <div data-rg-id="header-guid" class="${cls('header-guid', 'header-guid')}" style="font-weight:700;font-size:9pt;line-height:1.6">
+        <div class="section-content" style="${cssStr(innerSt)}">
+          <div class="header-guid" style="font-weight:700;font-size:9pt;line-height:1.6">
             <strong>Código de Generación: </strong>${xmlData?.header?.GUID || '[GUID]'}<br/>
             <strong>Número de Control: </strong>${numControl}<br/>
             <strong>Sello de Recepción: </strong><span style="font-weight:normal">${xmlData?.header?.ReceptionSeal || '[Sello de Recepción]'}</span>
@@ -463,27 +544,27 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
       </div>`;
     }
     if (sec === 'header-qr') {
-      const outerSt = buildWithOverrides('section-header-qr', sectionOuterStyle());
-      const innerSt = buildWithOverrides('header-qr', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', alignItems: 'flex-end' });
+      const outerSt = buildBlockOuter('header-qr', sectionOuterStyle());
+      const innerSt = buildBlockContent('header-qr', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', justifyContent: 'center', alignItems: 'flex-end' });
       const handles = sectionHandles();
-      return `<div data-rg-id="section-header-qr" data-drag-section="header-qr" class="${cls('section', 'section-header-qr')}" draggable="true"
+      return `<div data-rg-id="header-qr" data-drag-section="header-qr" class="${cls('section', 'header-qr')}" draggable="true"
         style="${cssStr(outerSt)}">
         ${handles}
-        <div data-rg-id="header-qr" class="${cls('section', 'header-qr')}" style="${cssStr(innerSt)}">
+        <div class="section-content" style="${cssStr(innerSt)}">
           ${qrUrl ? `<img src="${qrUrl}" width="125" height="125" alt="QR" />` : '<div style="width:125px;height:125px;border:1px dashed #ccc;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px">QR</div>'}
         </div>
       </div>`;
     }
     if (sec === 'header-info') {
-      const outerSt = buildWithOverrides('section-header-info', sectionOuterStyle());
-      const innerSt = buildWithOverrides('header-info', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', fontWeight: '700', fontSize: '9pt', lineHeight: '1.6' });
+      const outerSt = buildBlockOuter('header-info', sectionOuterStyle());
+      const innerSt = buildBlockContent('header-info', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', fontWeight: '700', fontSize: '9pt', lineHeight: '1.6' });
       const handles = sectionHandles();
-      return `<div data-rg-id="section-header-info" data-drag-section="header-info" class="${cls('section', 'section-header-info')}" draggable="true"
+      return `<div data-rg-id="header-info" data-drag-section="header-info" class="${cls('section', 'header-info')}" draggable="true"
         style="${cssStr(outerSt)}">
         ${handles}
-        <div data-rg-id="header-info" class="${cls('section', 'header-info')}" style="${cssStr(innerSt)}">
-          <div><strong>Modelo de Facturación: </strong>Previo</div>
-          <div><strong>Tipo de Transmisión: </strong>Normal</div>
+        <div class="section-content" style="${cssStr(innerSt)}">
+          <div><strong>Modelo de Facturación: </strong>${bindings.model || (xmlData?.header?.TipoModelo === '2' ? 'Diferido' : 'Previo')}</div>
+          <div><strong>Tipo de Transmisión: </strong>${bindings.transmission || (xmlData?.header?.TipoTransmision === '2' ? 'Contingencia' : 'Normal')}</div>
           <div><strong>Fecha y Hora de Generación: </strong>${formattedDate} Hora: ${formattedTime}</div>
         </div>
       </div>`;
@@ -494,13 +575,13 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
   const headerLayoutGrid = currentConfig.headerLayoutGrid || [['header-logo'], ['header-ids', 'header-qr', 'header-info']];
   const headerGridHtml = headerLayoutGrid.map((row, rowIdx) => {
     const cellsHtml = row.map(sec => renderHeaderSection(sec)).join('');
-    return `<div data-rg-id="header-row-${rowIdx}" style="display:flex;gap:8px;margin-top:10px;align-items:flex-end">${cellsHtml}</div>`;
+    return `<div data-rg-id="header-row-${rowIdx}" style="display:grid;grid-template-columns:repeat(${row.length},minmax(0,1fr));gap:8px;margin-top:10px;align-items:end;overflow:visible">${cellsHtml}</div>`;
   }).join('');
 
   const headerTitleSt = buildWithOverrides('header-title', { textAlign: 'center', fontWeight: '700', fontSize: '14pt', color: s.colorPrimary });
 
-  return `<div style="font-family:${s.fontFamily};font-size:${s.fontSize};color:${s.colorFont}">
-    <div data-rg-id="header" class="${cls('header', 'header')}" style="margin-bottom:15px">
+  return `<div style="font-family:${s.fontFamily};font-size:${s.fontSize};color:${s.colorFont};min-height:10.5in;display:flex;flex-direction:column">
+    <div class="header" style="margin-bottom:15px">
       <div data-rg-id="header-title" class="${cls('doc-type', 'doc-type')}" style="${cssStr(headerTitleSt)}">
         DOCUMENTO TRIBUTARIO ELECTRÓNICO<br/>${docTitle || currentConfig.title}
       </div>
@@ -508,6 +589,6 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
       ${headerGridHtml}
     </div>
 
-    ${gridHtml}
+    ${relatedHtml}${otherHtml}${gridHtml}${appendixHtml}${responsibleHtml}${renderSection('footer')}
   </div>`;
 }

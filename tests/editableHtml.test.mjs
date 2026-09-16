@@ -1,12 +1,37 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
-import { editableHtml, cleanPreviewHtml } from '../src/core/editableHtml';
+import { editableHtml, cleanPreviewHtml, applySelection } from '../src/core/editableHtml';
 import { buildPreviewHtml } from '../src/components/Preview/buildPreviewHtml';
 import config from '../src/configs/sv/fact.json';
 
 const parse = html => new DOMParser().parseFromString(html, 'text/html');
 describe('editable document rendering', () => {
-  it.each(['seller-name', 'buyer-name', 'item-0-Description', 'header-title', 'section-emisor'])('marks selection consistently for %s', selected => {
+  it('keeps table resize controls active when selecting an item or column and clears them on deselection', () => {
+    const doc = parse(editableHtml(buildPreviewHtml({ currentConfig: config, userStyle: {}, overrides: {},
+      xmlData: { items: [{ Description: 'Producto' }] } })));
+    const table = doc.querySelector('[data-drag-section="items"]');
+    for (const selected of ['items', 'col-Description', 'item-0-Description']) {
+      applySelection(doc, { selected });
+      expect(table.getAttribute('data-resize-active')).toBe('true');
+      expect(table.querySelector('[data-resize="he"]')).not.toBeNull();
+      expect(table.querySelector('.col-resize-handle')).not.toBeNull();
+    }
+    applySelection(doc, { selected: 'emisor' });
+    expect(table.hasAttribute('data-resize-active')).toBe(false);
+    expect(cleanPreviewHtml(doc.body)).not.toContain('data-resize-active');
+  });
+  it('exposes every document block as one editor element', () => {
+    const html = buildPreviewHtml({ currentConfig: config, userStyle: {}, overrides: {}, xmlData: null });
+    const doc = parse(editableHtml(html));
+    const blocks = ['emisor', 'receptor', 'items', 'totals', 'observaciones', 'footer',
+      'header-logo', 'header-ids', 'header-qr', 'header-info'];
+    for (const id of blocks) expect(doc.querySelectorAll(`[data-rg-id="${id}"]`)).toHaveLength(1);
+    expect(doc.querySelector('[data-rg-id^="section-"]')).toBeNull();
+    expect(doc.querySelector('[data-rg-id="table-items"], [data-rg-id="section-seller"], [data-rg-id="section-buyer"]')).toBeNull();
+    expect(doc.querySelector('[data-rg-id="header"], [data-rg-id="header-guid"]')).toBeNull();
+    expect(doc.querySelector('[data-rg-id="header-ids"] .header-guid')).not.toBeNull();
+  });
+  it.each(['seller-name', 'buyer-name', 'item-0-Description', 'header-title', 'emisor'])('marks selection consistently for %s', selected => {
     const html = buildPreviewHtml({ currentConfig: config, userStyle: {}, overrides: {},
       xmlData: { seller: { Name: 'ACME' }, buyer: { Name: 'Cliente' }, items: [{ Description: 'Producto' }] },
       selected: 'header', hovered: 'header-logo' });
@@ -33,6 +58,9 @@ describe('editable document rendering', () => {
     const header = doc.querySelector(`[data-rg-id="col-${first}"]`);
     expect(header.textContent).toBe('Mi columna');
     expect(header.style.width).toBe('150px');
+    const headerIds = [...doc.querySelectorAll('.items-table th')].map(el => el.dataset.fieldId.replace('item-col-', ''));
+    const cellIds = [...doc.querySelectorAll('.items-table tbody tr:first-child td')].map(el => el.dataset.rgId.replace('item-0-', ''));
+    expect(cellIds).toEqual(headerIds);
   });
   it('exports visible changes without selection or editing controls', () => {
     const doc = parse('<div id="page"><p class="rg-sel field-draggable" data-rg-id="a" draggable="true" style="color:red">Editado<span data-resize="e"></span><span class="col-resize-handle"></span></p></div>');
@@ -40,5 +68,16 @@ describe('editable document rendering', () => {
     expect(output.querySelector('p').textContent).toBe('Editado');
     expect(output.querySelector('p').style.color).toBe('red');
     expect(output.querySelector('[data-resize], .rg-sel, [draggable], .col-resize-handle')).toBeNull();
+  });
+  it('freezes the visible section height in the exported snapshot', () => {
+    const doc = parse('<div id="page"><section data-rg-id="emisor" data-drag-section="emisor"><p>Emisor</p></section></div>');
+    const page = doc.querySelector('#page');
+    const section = doc.querySelector('section');
+    Object.defineProperty(page, 'offsetWidth', { value: 816 });
+    page.getBoundingClientRect = () => ({ width: 408, height: 528 });
+    section.getBoundingClientRect = () => ({ width: 240, height: 110 });
+    const output = parse(cleanPreviewHtml(page));
+    expect(output.querySelector('section').style.height).toBe('220px');
+    expect(output.querySelector('section').style.flex).toBe('0 0 auto');
   });
 });
