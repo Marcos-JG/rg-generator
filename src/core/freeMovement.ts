@@ -54,7 +54,7 @@ export function applyPositions(doc, positions = {}) {
     if (!position) continue;
     el.style.transform = `translate(${position.x}px, ${position.y}px)`;
     el.style.position = 'relative';
-    el.style.zIndex = String(position.z || 1);
+    el.style.zIndex = String(Math.min(position.z || 1, 40));
     // A moved field may cross its original table or section boundary.
     let parent = el.parentElement;
     while (parent && parent !== doc.body) {

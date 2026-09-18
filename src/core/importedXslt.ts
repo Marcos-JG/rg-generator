@@ -49,7 +49,7 @@ export function editImportedXsltDocument(source, { overrides = {}, positions = {
     if (position) {
       css.transform = `translate(${position.x}px, ${position.y}px)`;
       css.position = 'relative';
-      css.zIndex = String(position.z || 1);
+      css.zIndex = String(Math.min(position.z || 1, 40));
     }
     if (css.cssText) appendCss(doc, node, css.cssText);
     if (position && (position.x || position.y)) {

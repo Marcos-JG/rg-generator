@@ -72,7 +72,7 @@ export default function useFreeMove(containerRef, active, mode, setSelected, doc
         x: e.clientX, y: e.clientY, pointerId: e.pointerId, css: el.style.cssText,
         prevDraggable: el.getAttribute('draggable'),
         parents: [], userSelect: page.style.userSelect, moved: false,
-        z: Math.max(0, ...Object.values(positions).map(p => p.z || 0)) + 1 };
+        z: Math.min(40, Math.max(0, ...Object.values(positions).map(p => p.z || 0)) + 1) };
       page.setAttribute('data-free-moving', 'true');
     };
     const move = e => {
