@@ -56,7 +56,7 @@ export default function useColumnResize(containerRef, setOverrides, renderKey, s
       if (s.type === 'label') {
         const sectionW = s.section.getBoundingClientRect().width;
         const w = Math.max(30, Math.min(s.startW + dx, sectionW - 20));
-        s.section.querySelectorAll('tr[data-field-id] > td:first-child').forEach(td => {
+        s.section.querySelectorAll('tr[data-field-id] > td:first-child, tr[data-rg-id] > td:first-child').forEach(td => {
           td.style.width = w + 'px';
         });
       } else {
@@ -79,7 +79,7 @@ export default function useColumnResize(containerRef, setOverrides, renderKey, s
       el.removeAttribute('data-col-dragging');
 
       if (s.type === 'label') {
-        const firstTd = s.section.querySelector('tr[data-field-id] > td:first-child');
+        const firstTd = s.section.querySelector('tr[data-field-id] > td:first-child, tr[data-rg-id] > td:first-child');
         const labelWidth = firstTd ? firstTd.style.width : '';
         if (labelWidth) {
           setOverrides((prev) => ({
