@@ -73,7 +73,7 @@ export function elementLabel(id = '') {
   const prefixes = [
     ['seller-', 'Emisor · '], ['buyer-', 'Receptor · '],
     ['total-', 'Totales · '], ['item-col-', 'Columna · '],
-    ['item-', 'Ítem · '], ['obs-', 'Observaciones · '], ['da-', 'Dato adicional · '],
+    ['item-', 'Ítem · '], ['obs-', 'Observaciones · '], ['da-', 'Dato adicional · '], ['apx-', 'Información adicional · '],
   ];
   const match = prefixes.find(([prefix]) => id.startsWith(prefix));
   const raw = match ? id.slice(match[0].length) : id;

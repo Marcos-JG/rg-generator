@@ -62,6 +62,7 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     if (rid.startsWith('seller-')) sectionKey = 'emisor';
     else if (rid.startsWith('buyer-')) sectionKey = 'receptor';
     else if (rid.startsWith('total-')) sectionKey = 'totals';
+    else if (rid.startsWith('apx-')) sectionKey = 'apendice';
     else sectionKey = 'datos-adicionales';
     return overrides[sectionKey]?.labelWidth || '35%';
   };
@@ -274,10 +275,25 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     NotaEntrega: 'Nota de entrega', NOTA_ENTREGA: 'Nota de entrega',
   };
   const responsibleNames = new Set(['NombreEntrega', 'DocuEntrega', 'NombreRecibe', 'DocuRecibe']);
-  const appendixRows = (xmlData?.appendix || []).filter((item) => item.value?.trim() && !responsibleNames.has(item.name)).map((item) => {
+  const appendixRows = (xmlData?.appendix || []).filter((item) => item.value?.trim() && !responsibleNames.has(item.name)).map((item, index) => {
     const compactName = item.name.replace(/\s+/g, '');
     const label = appendixLabels[item.name] || appendixLabels[compactName] || item.name.replaceAll('_', ' ');
-    return `<tr><td style="font-weight:bold;width:25%;padding:2px 4px">${label}:</td><td style="padding:2px 4px">${item.value}</td></tr>`;
+    const rid = `apx-${index}-${compactName}`;
+    const ov = overrides[rid] || {};
+    const padTop = ov.marginTop || overrides['apendice']?.marginTop;
+    const padBottom = ov.marginBottom || overrides['apendice']?.marginBottom;
+    const labelSt: Record<string, string> = { fontWeight: 'bold', whiteSpace: 'nowrap', width: labelWidthFor(rid), padding: '2px 4px' };
+    const valSt: Record<string, string> = { padding: '2px 4px' };
+    if (padTop) { labelSt.paddingTop = padTop; valSt.paddingTop = padTop; }
+    if (padBottom) { labelSt.paddingBottom = padBottom; valSt.paddingBottom = padBottom; }
+    const labelCss = cssStr({ ...buildWithOverrides(rid, labelSt), ...(ov.textAlign ? { textAlign: ov.textAlign } : {}) });
+    const valCss = cssStr({ ...buildWithOverrides(`${rid}-val`, valSt), ...(ov.textAlign ? { textAlign: ov.textAlign } : {}) });
+    const colHandle = `<div class="col-resize-handle" data-label-resize="1"></div>`;
+    const rowHandle = `<div data-resize="row" style="position:absolute;left:0;right:0;bottom:-4px;height:7px;z-index:30;cursor:ns-resize;pointer-events:auto"></div>`;
+    return `<tr data-rg-id="${rid}" style="position:relative">
+        <td style="position:relative;${labelCss}">${label}:&nbsp;${colHandle}${rowHandle}</td>
+        <td style="${valCss}">${item.value}</td>
+      </tr>`;
   }).join('');
   const appendixHtml = appendixRows ? infoBlock('apendice', 'INFORMACIÓN ADICIONAL', `<table width="100%"><tbody>${appendixRows}</tbody></table>`) : '';
   const resp = xmlData?.responsible || {};

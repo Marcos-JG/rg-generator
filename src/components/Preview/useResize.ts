@@ -25,12 +25,13 @@ export default function useResize(containerRef, overrides, setOverrides, renderK
       if (!section) return;
 
       const sectionName = section.getAttribute('data-drag-section');
+      const rowEl = dir === 'row' ? (handle.closest('[data-field-id]') || handle.closest('[data-rg-id]')) : null;
       const rgId = dir === 'row'
-        ? (handle.closest('[data-field-id]')?.getAttribute('data-field-id') || '')
+        ? (rowEl?.getAttribute('data-field-id') || rowEl?.getAttribute('data-rg-id') || '')
         : sectionName;
       if (!rgId) return;
 
-      const targetEl = dir === 'row' ? handle.closest('[data-field-id]') : section;
+      const targetEl = dir === 'row' ? rowEl : section;
       const rect = targetEl.getBoundingClientRect();
       const pageRect = el.getBoundingClientRect();
       const scale = pageRect.width / (el.offsetWidth || pageRect.width || 1) || 1;
