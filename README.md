@@ -1,14 +1,18 @@
 # RG Generator
 
-Editor visual de representaciones gráficas de documentos XML, construido con React y Vite.
+Editor visual de representaciones gráficas de documentos XML, construido con Next.js, React y TypeScript.
 
 ## Desarrollo
 
 - `npm install`: instalar dependencias.
-- `npm run dev`: abrir el servidor de desarrollo.
+- `npm run dev`: abrir el servidor de desarrollo en http://localhost:5173.
 - `npm run build`: generar la aplicación.
+- `npm start`: servir la aplicación compilada en http://localhost:5173.
+- `npm run typecheck`: comprobar los tipos de TypeScript.
 - `npm test`: ejecutar las pruebas.
 - `npm run lint`: revisar el código.
+
+Las rutas y el documento base están en `src/app`. El editor se carga en el navegador para utilizar DOMParser, XSLTProcessor y el almacenamiento local. Los archivos de `public/templates` se incorporan al código mediante `scripts/generate-templates.mjs`, que se ejecuta automáticamente antes del desarrollo, la compilación y las pruebas. Vitest utiliza Vite únicamente como herramienta de pruebas.
 
 ## Edición visual
 

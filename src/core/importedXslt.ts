@@ -28,7 +28,7 @@ export function parseImportedXslt(source) {
 
 // Patch literal result elements in the original stylesheet; never rebuild its
 // XPath expressions, conditions, loops, named templates or includes.
-export function editImportedXsltDocument(source, { overrides = {}, positions = {}, textOverrides = {} } = {}, preview = false) {
+export function editImportedXsltDocument(source, { overrides = {}, positions = {}, textOverrides = {} }: import('../types/editor').EditorState = {}, preview = false) {
   const doc = parseImportedXslt(source);
   const elements = [...doc.getElementsByTagName('*')].filter(node =>
     node.namespaceURI !== XSL && selectable.has(node.localName) &&
@@ -40,8 +40,9 @@ export function editImportedXsltDocument(source, { overrides = {}, positions = {
     const ov = overrides[id] || {};
     const css = document.createElement('div').style;
     for (const [property, value] of Object.entries(ov)) {
-      if (property === 'separationX') css.paddingLeft = value;
-      else if (property in css) css[property] = value;
+      if (typeof value !== 'string' && typeof value !== 'number') continue;
+      if (property === 'separationX') css.paddingLeft = String(value);
+      else if (property in css) css.setProperty(property.replace(/[A-Z]/g, letter => '-' + letter.toLowerCase()), String(value));
     }
     const position = positions[id];
     if (position) {

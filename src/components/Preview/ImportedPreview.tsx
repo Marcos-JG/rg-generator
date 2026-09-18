@@ -6,9 +6,9 @@ import useFreeMove from './useFreeMove';
 import StylePanel from './PreviewToolbar';
 
 export function importedSnapshot() {
-  const doc = document.querySelector('[data-imported-preview]')?.contentDocument;
+  const doc = document.querySelector<HTMLIFrameElement>('[data-imported-preview]')?.contentDocument;
   if (!doc?.body) return null;
-  const head = doc.head.cloneNode(true);
+  const head = doc.head.cloneNode(true) as HTMLHeadElement;
   head.querySelectorAll('[data-import-editor], script').forEach(node => node.remove());
   return `<!DOCTYPE html><html><head>${head.innerHTML}</head><body>${cleanPreviewHtml(doc.body)}</body></html>`;
 }

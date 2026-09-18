@@ -1,8 +1,9 @@
 // Text fragments get identities within their nearest element. Wrapping only the
 // text preserves labels, data cells, line breaks and resize handles during editing.
 import { applyPositions } from './freeMovement';
+interface Selection { selected?: string; hovered?: string }
 
-export function editableHtml(html, textOverrides = {}, positions = {}, selection = {}) {
+export function editableHtml(html, textOverrides = {}, positions = {}, selection: Selection = {}) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const walker = doc.createTreeWalker(doc.body, 4);
   const nodes = [];
@@ -29,7 +30,7 @@ export function editableHtml(html, textOverrides = {}, positions = {}, selection
 
 // Update highlights in place so hovering/selecting never replaces document nodes
 // or disrupts the browser's scroll anchor, focus and pointer target.
-export function applySelection(root, selection = {}) {
+export function applySelection(root, selection: Selection = {}) {
   root.querySelectorAll('[data-resize-active]').forEach(el => el.removeAttribute('data-resize-active'));
   root.querySelectorAll('.rg-sel, .rg-hover').forEach(el => el.classList.remove('rg-sel', 'rg-hover'));
   for (const el of root.querySelectorAll('[data-rg-id]')) {

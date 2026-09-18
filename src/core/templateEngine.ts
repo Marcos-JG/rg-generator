@@ -1,4 +1,4 @@
-import { escapeXml } from './escapeXml.js';
+import { escapeXml } from './escapeXml';
 
 export function replaceAllPlaceholders(template, key, value) {
   return template.replaceAll(`{{${key}}}`, () => value);

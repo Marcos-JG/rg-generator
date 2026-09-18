@@ -3,7 +3,7 @@ import { generateXslt } from '../../core/xsltGenerator';
 import { extractXmlData } from '../../core/xmlParser';
 import Button from '../shared/Button';
 import { cleanPreviewHtml } from '../../core/editableHtml';
-import baseTemplate from '../../../public/templates/base.xsl?raw';
+import { baseTemplate } from '../../generated/templates';
 import { documentCss } from '../../core/documentCss';
 import { isReferenceDocument } from '../../core/referenceXslt';
 import { editImportedXslt } from '../../core/importedXslt';
@@ -136,8 +136,8 @@ export default function DownloadButton() {
       ? 'El XSL usa el diseño actual del editor y los dos archivos compartidos. Guarda los tres en la misma carpeta.'
       : 'El XSL usa la configuración actual del documento. El HTML y PDF conservan además una captura exacta de la preview.'}</p>}
     {(customXslt || isReferenceDocument(currentConfig || {})) && <div className="export-shared mt-2 flex gap-4 text-xs text-blue-700">
-      <a href={`${import.meta.env.BASE_URL}templates/RG-SharedSV_fel_2.xslt`} download="RG-SharedSV_fel_2.xslt">Descargar RG-SharedSV_fel_2.xslt</a>
-      <a href={`${import.meta.env.BASE_URL}templates/Shared_ENLETRAS_fel_2.xslt`} download="Shared_ENLETRAS_fel_2.xslt">Descargar Shared_ENLETRAS_fel_2.xslt</a>
+      <a href={`/templates/RG-SharedSV_fel_2.xslt`} download="RG-SharedSV_fel_2.xslt">Descargar RG-SharedSV_fel_2.xslt</a>
+      <a href={`/templates/Shared_ENLETRAS_fel_2.xslt`} download="Shared_ENLETRAS_fel_2.xslt">Descargar Shared_ENLETRAS_fel_2.xslt</a>
     </div>}
     {customXslt && Object.entries(customXsltFiles || {}).map(([name, content]) => <button key={name} className="text-xs text-blue-700" onClick={() => {
       const url = URL.createObjectURL(new Blob([normalizeXmlSource(content)], { type: 'application/xml' }));

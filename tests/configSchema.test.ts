@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateConfig } from '../src/core/configSchema.js';
+import { validateConfig } from '../src/core/configSchema';
 
 const validConfig = {
   country: 'sv',

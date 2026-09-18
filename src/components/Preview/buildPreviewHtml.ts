@@ -1,7 +1,8 @@
+interface PreviewBindings { date?: string; time?: string; money?: (value: string) => string; logo?: string; qr?: string; itemNumber?: string; footer?: string; model?: string; transmission?: string }
 import { cssStr } from './helpers';
 import { buildFooterText } from '../../core/svFormat';
 
-export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides, selected, hovered, docTitle, bindings = {} }) {
+export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides, selected = '', hovered = '', docTitle, bindings = {} as PreviewBindings }) {
   const s = { ...currentConfig.style, ...userStyle };
   const cls = (name, rgId) => {
     let c = name;
@@ -456,8 +457,8 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
         const padTop = alignOv.marginTop || daSecOv.marginTop;
         const padBottom = alignOv.marginBottom || daSecOv.marginBottom;
         const gapX = alignOv.separationX || daSecOv.separationX;
-        const labelSt = { fontWeight: 'bold', whiteSpace: 'nowrap', padding: '2px 4px', width: labelWidthFor(rid) };
-        const valSt = { padding: '2px 4px' };
+        const labelSt: Record<string, string> = { fontWeight: 'bold', whiteSpace: 'nowrap', padding: '2px 4px', width: labelWidthFor(rid) };
+        const valSt: Record<string, string> = { padding: '2px 4px' };
         if (padTop) { labelSt.paddingTop = padTop; valSt.paddingTop = padTop; }
         if (padBottom) { labelSt.paddingBottom = padBottom; valSt.paddingBottom = padBottom; }
         if (gapX) valSt.paddingLeft = gapX;

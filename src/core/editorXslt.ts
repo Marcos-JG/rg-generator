@@ -24,7 +24,7 @@ const totalInfo = name => info('/Root/Totals/AdditionalInfo', name);
 // Compile the canvas markup with symbolic values. The layout is built once by
 // buildPreviewHtml; only data bindings and repeated/conditional rows become XSL.
 // No values from the uploaded invoice are embedded in the reusable stylesheet.
-export function generateEditorXslt(config, userStyle = {}, editor = {}) {
+export function generateEditorXslt(config, userStyle: Partial<import('../types/editor').UserStyle> = {}, editor: import('../types/editor').EditorState = {}) {
   const tokens = new Map();
   const bind = instruction => {
     const key = `RGXVALUE${tokens.size}END`;
@@ -33,7 +33,7 @@ export function generateEditorXslt(config, userStyle = {}, editor = {}) {
   };
   const select = path => bind(value(path));
   const conditions = new Map();
-  const parties = {};
+  const parties: Record<string, Record<string, string>> = {};
   const fieldIds = { Name:'name', TaxID:'nit', NRC:'nrc', TaxIDType:'taxidtype', Address:'address',
     Phone:'phone', Email:'email', NombreComercial:'nombre-comercial', TipoEstablecimiento:'tipo-establecimiento' };
   for (const party of ['seller', 'buyer']) {

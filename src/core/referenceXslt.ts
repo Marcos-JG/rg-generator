@@ -1,6 +1,4 @@
-import reference from '../../public/templates/XSLTS3_dtesv_Carta_06141602171030_fel_1.xslt?raw';
-import shared from '../../public/templates/RG-SharedSV_fel_2.xslt?raw';
-import words from '../../public/templates/Shared_ENLETRAS_fel_2.xslt?raw';
+import { reference, shared, words } from '../generated/templates';
 import { normalizeXmlSource } from './xmlSource';
 
 const XSL = 'http://www.w3.org/1999/XSL/Transform';

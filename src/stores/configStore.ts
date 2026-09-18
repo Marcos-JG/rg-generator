@@ -3,8 +3,9 @@ import { persist } from 'zustand/middleware';
 import { useHistoryStore } from './historyStore';
 import { normalizeSavedDesign } from '../core/editorElements';
 import { getConfig } from '../configs';
+import type { ConfigStore, DesignState, UserStyle } from '../types/editor';
 
-const defaultStyle = () => ({
+const defaultStyle = (): UserStyle => ({
   colorPrimary: '#020873', colorFont: '#333333', colorBorder: '#808080',
   colorTotalesBg: '#e6e6e6', colorTotalPagarBg: '#D1D5DB',
   fontSize: '7pt', fontSizeHeader: '12pt', fontFamily: 'Arial, Helvetica, sans-serif',
@@ -14,18 +15,18 @@ const defaultStyle = () => ({
 });
 
 // History stores the complete design, without duplicating the source XML.
-const designState = ({ currentConfig, userStyle, docTitle, overrides, textOverrides, positions }) =>
+const designState = ({ currentConfig, userStyle, docTitle, overrides, textOverrides, positions }: DesignState) =>
   ({ currentConfig, userStyle, docTitle, overrides, textOverrides, positions });
 
-export const useConfigStore = create(persist((set, get) => {
-  const commit = (updates) => {
+export const useConfigStore = create<ConfigStore>()(persist((set, get) => {
+  const commit = (updates: Partial<ConfigStore> | ((state: ConfigStore) => Partial<ConfigStore>)) => {
     const before = JSON.stringify(designState(get()));
     const patch = typeof updates === 'function' ? updates(get()) : updates;
     if (before === JSON.stringify(designState({ ...get(), ...patch }))) return;
     useHistoryStore.getState().snapshot(before);
     set(patch);
   };
-  const restore = (direction) => {
+  const restore = (direction: 'undo' | 'redo') => {
     const state = useHistoryStore.getState()[direction](JSON.stringify(designState(get())));
     if (state) set(JSON.parse(state));
   };
@@ -65,7 +66,7 @@ export const useConfigStore = create(persist((set, get) => {
   name: 'rg-generator-config',
   version: 5,
   migrate: persisted => {
-    const next = normalizeSavedDesign(persisted);
+    const next = normalizeSavedDesign(persisted as ConfigStore);
     const country = next.metadata?.country?.toLowerCase();
     const docType = String(next.metadata?.docType || '');
     const fresh = getConfig(country, docType);

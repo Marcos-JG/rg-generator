@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { replaceAllPlaceholders, processTemplate } from '../src/core/templateEngine.js';
+import { replaceAllPlaceholders, processTemplate } from '../src/core/templateEngine';
 
 describe('templateEngine', () => {
   describe('replaceAllPlaceholders', () => {

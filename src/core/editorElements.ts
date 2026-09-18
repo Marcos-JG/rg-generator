@@ -39,7 +39,7 @@ const OBSOLETE_IDS = new Set(['header']);
 
 export const canonicalElementId = id => LEGACY_ALIASES[id] || id;
 
-export function normalizeElementRecord(record = {}) {
+export function normalizeElementRecord<T extends object>(record: Record<string, T> = {}): Record<string, T> {
   const normalized = {};
   // Legacy wrapper values supply dimensions first; values stored under the
   // canonical content ID take precedence when both existed.
@@ -57,7 +57,7 @@ export function normalizeElementRecord(record = {}) {
   return normalized;
 }
 
-export function normalizeSavedDesign(state = {}) {
+export function normalizeSavedDesign<T extends import('../types/editor').DesignState>(state: T): T {
   const positions = normalizeElementRecord(state.positions);
   delete positions.footer;
   return {

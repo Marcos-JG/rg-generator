@@ -1,8 +1,9 @@
 import { create } from 'zustand';
+import type { HistoryStore } from '../types/editor';
 
 const MAX_HISTORY = 50;
 
-export const useHistoryStore = create((set, get) => ({
+export const useHistoryStore = create<HistoryStore>((set, get) => ({
   past: [],
   future: [],
 

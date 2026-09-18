@@ -3,7 +3,7 @@ import { useConfigStore } from '../../stores/configStore';
 import { generateXslt } from '../../core/xsltGenerator';
 import { transformXmlToHtml } from '../../core/xmlTransformer';
 import { extractXmlData } from '../../core/xmlParser';
-import template from '../../../public/templates/base.xsl?raw';
+import { baseTemplate as template } from '../../generated/templates';
 import { bundleXslt } from '../../core/referenceXslt';
 
 export default function PreviewFrame() {

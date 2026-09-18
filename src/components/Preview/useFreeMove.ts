@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useConfigStore } from '../../stores/configStore';
 import { movementTarget, movementDelta, alignmentGuides } from '../../core/freeMovement';
 
-export default function useFreeMove(containerRef, active, mode, setSelected, documentKey) {
+export default function useFreeMove(containerRef, active, mode, setSelected, documentKey?: number) {
   useEffect(() => {
     const page = containerRef.current;
     if (!page || !active || mode === 'reorder') return;

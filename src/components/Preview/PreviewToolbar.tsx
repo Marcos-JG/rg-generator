@@ -96,7 +96,7 @@ function PxInput({ value, onChange, placeholders = [0, 4, 10, 20] }) {
         step="1"
         onChange={(e) => set(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && e.target.value === '') set(0);
+          if (e.key === 'Enter' && e.currentTarget.value === '') set(0);
         }}
         className="flex-1 min-w-0 border rounded px-2 py-1"
         placeholder="—"
@@ -118,7 +118,7 @@ function PxInput({ value, onChange, placeholders = [0, 4, 10, 20] }) {
   );
 }
 
-function SizeInput({ value, onChange, allowPercent }) {
+function SizeInput({ value, onChange, allowPercent = false }) {
   const { num, unit } = parseSize(value);
   const set = (n, u) => {
     const v = u === 'auto' ? 'auto' : `${n}${u}`;
