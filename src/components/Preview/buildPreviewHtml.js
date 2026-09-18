@@ -579,13 +579,14 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
   }).join('');
 
   const headerTitleSt = buildWithOverrides('header-title', { textAlign: 'center', fontWeight: '700', fontSize: '14pt', color: s.colorPrimary });
+  const headerVersionSt = buildWithOverrides('header-version', { display: 'flex', justifyContent: 'flex-end', fontWeight: '700', whiteSpace: 'nowrap' });
 
   return `<div style="font-family:${s.fontFamily};font-size:${s.fontSize};color:${s.colorFont};min-height:10.5in;display:flex;flex-direction:column">
     <div class="header" style="margin-bottom:15px">
       <div data-rg-id="header-title" class="${cls('doc-type', 'doc-type')}" style="${cssStr(headerTitleSt)}">
         DOCUMENTO TRIBUTARIO ELECTRÓNICO<br/>${docTitle || currentConfig.title}
       </div>
-      <div style="display:flex;justify-content:flex-end;font-weight:700;white-space:nowrap">Ver. ${xmlData?.header?.Version || '1.0'}</div>
+      <div data-rg-id="header-version" style="${cssStr(headerVersionSt)}">Ver. ${xmlData?.header?.Version || '1.0'}</div>
       ${headerGridHtml}
     </div>
 
