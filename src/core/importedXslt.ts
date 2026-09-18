@@ -1,5 +1,6 @@
 import { bundleXsltDocument } from './referenceXslt';
 import { normalizeXmlSource } from './xmlSource';
+import { xmlFieldElement } from './xmlFields';
 
 const XSL = 'http://www.w3.org/1999/XSL/Transform';
 const selectable = new Set(['div', 'table', 'td', 'th', 'p', 'span', 'b', 'strong', 'img', 'hr', 'h1', 'h2', 'h3']);
@@ -28,7 +29,7 @@ export function parseImportedXslt(source) {
 
 // Patch literal result elements in the original stylesheet; never rebuild its
 // XPath expressions, conditions, loops, named templates or includes.
-export function editImportedXsltDocument(source, { overrides = {}, positions = {}, textOverrides = {} }: import('../types/editor').EditorState = {}, preview = false) {
+export function editImportedXsltDocument(source, { overrides = {}, positions = {}, textOverrides = {}, xmlFields = [] }: import('../types/editor').EditorState = {}, preview = false) {
   const doc = parseImportedXslt(source);
   const elements = [...doc.getElementsByTagName('*')].filter(node =>
     node.namespaceURI !== XSL && selectable.has(node.localName) &&
@@ -81,6 +82,19 @@ export function editImportedXsltDocument(source, { overrides = {}, positions = {
         table.setAttribute('class', `${table.getAttribute('class') || ''} items-table`.trim());
         table.setAttribute('data-drag-section', 'items');
       }
+    }
+  }
+  if (xmlFields.length) {
+    const body = [...doc.getElementsByTagName('*')].find(node => node.localName === 'body' && node.namespaceURI !== XSL);
+    if (!body) throw new Error('Para agregar datos, la plantilla debe tener un elemento body en su salida HTML.');
+    appendCss(doc, body, 'position:relative;');
+    for (const field of xmlFields) {
+      const node = xmlFieldElement(doc, field, { overrides, positions, textOverrides }, preview);
+      const value = doc.createElementNS(XSL, 'xsl:value-of');
+      value.setAttribute('select', field.xpath);
+      const span = doc.createElement('span');
+      if (preview) span.setAttribute('data-rg-value', 'true');
+      span.appendChild(value); node.appendChild(span); body.appendChild(node);
     }
   }
   return doc;

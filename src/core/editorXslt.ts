@@ -3,6 +3,7 @@ import { editableHtml } from './editableHtml';
 import { escapeXml as esc } from './escapeXml';
 import { documentCss } from './documentCss';
 import { bundleXslt, isReferenceDocument } from './referenceXslt';
+import { appendXmlFieldsHtml } from './xmlFields';
 
 const XSL = 'http://www.w3.org/1999/XSL/Transform';
 const value = select => `<xsl:value-of select="${esc(select)}"/>`;
@@ -110,6 +111,7 @@ export function generateEditorXslt(config, userStyle: Partial<import('../types/e
     logo:select(`concat('https://digifact-logo.s3.amazonaws.com/SV/logo/',${nit},'.jpg')`),
     qr:select(`concat('https://cert.digifact.com.sv/QRService/api/QR?data=https%3A%2F%2Fadmin.factura.gob.sv%2FconsultaPublica%3Fambiente%3D',${hdr}/AdditionalIssueType,'%257CcodGen%3D',${hdr}/GUID,'%257CfechaEmi%3D',substring(${date},1,10),'&size=100x100')`), footer:bind(footer) };
   let html = buildPreviewHtml({ currentConfig:config, userStyle, xmlData:data, overrides:editor.overrides || {}, docTitle:userStyle.docTitle, bindings });
+  html = appendXmlFieldsHtml(html, editor.xmlFields || [], select, { overrides: editor.overrides, textOverrides: editor.textOverrides });
   const buyerCode = info('/Root/Buyer/TaxIDAdditionalInfo','CodigoActividad');
   const buyerDescription = info('/Root/Buyer/TaxIDAdditionalInfo','DescActividad');
   html = html.replace(`${parties.buyer.CodigoActividad} – ${parties.buyer.DescActividad}`, bind(choose(`string(${buyerCode}) != '' and string(${buyerDescription}) != ''`, `${value(buyerCode)}${literal(' – ')}${value(buyerDescription)}`, value(buyerDescription))));

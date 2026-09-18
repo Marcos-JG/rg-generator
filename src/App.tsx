@@ -9,6 +9,7 @@ import LayoutConfig from './components/ConfigPanel/LayoutConfig';
 import StyleConfig from './components/ConfigPanel/StyleConfig';
 import FooterConfig from './components/ConfigPanel/FooterConfig';
 import AdendaConfig from './components/ConfigPanel/AdendaConfig';
+import XmlDataPalette from './components/ConfigPanel/XmlDataPalette';
 import InteractivePreview from './components/Preview/InteractivePreview';
 import DownloadButton from './components/Preview/DownloadButton';
 import ImportedPreview from './components/Preview/ImportedPreview';
@@ -45,6 +46,7 @@ export default function App() {
           <VersionSelect />
           </div>
           <div hidden={panel !== 'contenido'} className="inspector-group">
+          <XmlDataPalette />
           <FieldToggles />
           <ColumnConfig />
           <AdendaConfig />

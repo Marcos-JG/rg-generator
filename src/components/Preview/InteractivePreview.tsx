@@ -11,9 +11,12 @@ import { buildPreviewHtml } from './buildPreviewHtml';
 import StylePanel from './PreviewToolbar';
 import { editableHtml, applySelection } from '../../core/editableHtml';
 import { documentCss } from '../../core/documentCss';
+import { appendXmlFieldsHtml, xmlValue } from '../../core/xmlFields';
+import useXmlFieldDrop from './useXmlFieldDrop';
+import { normalizeXmlSource } from '../../core/xmlSource';
 
 export default function InteractivePreview() {
-  const { xmlString, currentConfig, userStyle, customXslt, docTitle, overrides, setOverrides, textOverrides, positions, setPosition } = useConfigStore();
+  const { xmlString, currentConfig, userStyle, customXslt, docTitle, overrides, setOverrides, textOverrides, positions, setPosition, xmlFields = [] } = useConfigStore();
   const canUndo = useHistoryStore((s) => s.past.length > 0);
   const canRedo = useHistoryStore((s) => s.future.length > 0);
   const [renderKey, setRenderKey] = useState(0);
@@ -21,6 +24,7 @@ export default function InteractivePreview() {
   const containerRef = useRef(null);
 
   const active = Boolean(xmlString && currentConfig && !customXslt);
+  useXmlFieldDrop(containerRef, active);
 
   useFieldDrag(containerRef, renderKey, setRenderKey, active && moveMode === 'reorder');
   useResize(containerRef, overrides, setOverrides, renderKey, setRenderKey, active);
@@ -48,7 +52,7 @@ export default function InteractivePreview() {
   let xmlDoc = null;
   try {
     const parser = new DOMParser();
-    xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+    xmlDoc = parser.parseFromString(normalizeXmlSource(xmlString), 'text/xml');
     if (!xmlDoc.querySelector('parsererror')) {
       xmlData = extractXmlData(xmlDoc);
     }
@@ -80,6 +84,7 @@ export default function InteractivePreview() {
     html = buildPreviewHtml({
       currentConfig, userStyle, xmlData, overrides, docTitle,
     });
+    html = appendXmlFieldsHtml(html, xmlFields, xpath => xmlDoc ? xmlValue(xmlDoc, xpath) : '', { overrides, textOverrides });
     html = editableHtml(html, textOverrides, positions);
   }
 

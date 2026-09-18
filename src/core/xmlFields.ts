@@ -1,0 +1,74 @@
+import { normalizeXmlSource } from './xmlSource';
+import type { EditorState, XmlField } from '../types/editor';
+
+export const XML_FIELD_MIME = 'application/x-rg-xml-field';
+export const XML_FIELD_TEXT_PREFIX = 'rg-xml-field:';
+// Some browsers remove custom transfer types on entry into the preview iframe.
+let draggedXPath: string | null = null;
+export const beginXmlFieldDrag = (xpath: string) => { draggedXPath = xpath; };
+export const endXmlFieldDrag = () => { draggedXPath = null; };
+export const activeXmlFieldDrag = () => draggedXPath;
+export interface XmlDatum { xpath: string; label: string; path: string; value: string }
+const literal = (value: string) => !value.includes("'") ? `'${value}'` :
+  !value.includes('"') ? `"${value}"` : `concat(${value.split("'").map(part => `'${part}'`).join(`,"'",`)})`;
+const nameTest = (node: Element | Attr) => `local-name()=${literal(node.localName)} and ${node.namespaceURI ? `namespace-uri()=${literal(node.namespaceURI)}` : 'not(namespace-uri())'}`;
+
+// Absolute XPath 1.0 needs no stylesheet namespace declarations. Named Info
+// entries retain their identity when siblings are reordered in another XML.
+export function xmlDataFields(source: string): XmlDatum[] {
+  const doc = new DOMParser().parseFromString(normalizeXmlSource(source), 'application/xml');
+  if (doc.querySelector('parsererror')) return [];
+  const fields: XmlDatum[] = [];
+  const visit = (node: Element, parent: string, display: string) => {
+    const siblings = [...(node.parentElement?.children || [node])].filter(other => other.localName === node.localName && other.namespaceURI === node.namespaceURI);
+    const named = node.getAttribute('Name');
+    const uniqueName = named && siblings.filter(other => other.getAttribute('Name') === named).length === 1;
+    const identity = uniqueName ? `[@Name=${literal(named)}]` : `[${siblings.indexOf(node) + 1}]`;
+    const xpath = `${parent}/*[${nameTest(node)}]${identity}`;
+    const path = `${display}/${node.localName}${uniqueName ? ` (${named})` : siblings.length > 1 ? ` [${siblings.indexOf(node) + 1}]` : ''}`;
+    for (const attr of [...node.attributes]) {
+      if (attr.namespaceURI === 'http://www.w3.org/2000/xmlns/' || !attr.value.trim()) continue;
+      fields.push({ xpath: `${xpath}/@*[${nameTest(attr)}]`, label: attr.localName === 'Value' && named ? named : attr.localName, path: `${path}/@${attr.localName}`, value: attr.value });
+    }
+    if (!node.children.length && node.textContent.trim()) fields.push({ xpath, label: named || node.localName, path, value: node.textContent.trim() });
+    for (const child of [...node.children]) visit(child, xpath, path);
+  };
+  visit(doc.documentElement, '', '');
+  return fields;
+}
+
+export function xmlValue(doc: Document, xpath: string): string {
+  return doc.evaluate(xpath, doc, null, 2, null).stringValue;
+}
+
+export function xmlFieldElement(doc: Document, field: XmlField, editor: EditorState, preview: boolean): Element {
+  const node = doc.createElement('div');
+  const style = document.createElement('div').style;
+  style.cssText = `position:absolute;left:${field.x}px;top:${field.y}px;width:220px;min-height:20px;z-index:10;font:12px Arial,sans-serif;color:#111;white-space:pre-wrap;overflow-wrap:anywhere;`;
+  for (const [key, value] of Object.entries(editor.overrides?.[field.id] || {})) {
+    if ((typeof value === 'string' || typeof value === 'number') && key in style) style.setProperty(key.replace(/[A-Z]/g, char => '-' + char.toLowerCase()), String(value));
+  }
+  const position = editor.positions?.[field.id];
+  if (position) style.transform = `translate(${position.x}px,${position.y}px)`;
+  node.setAttribute('style', style.cssText);
+  if (preview) node.setAttribute('data-rg-id', field.id);
+  const label = doc.createElement('span');
+  label.textContent = editor.textOverrides?.[`${field.id}:text:0`] ?? `${field.label}: `;
+  if (preview) label.setAttribute('data-rg-text', `${field.id}:text:0`);
+  node.appendChild(label);
+  return node;
+}
+
+export function appendXmlFieldsHtml(html: string, fields: XmlField[], resolve: (xpath: string) => string, editor: EditorState): string {
+  if (!fields?.length) return html;
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  for (const field of fields) {
+    const node = xmlFieldElement(doc, field, editor, true);
+    const value = doc.createElement('span');
+    value.setAttribute('data-rg-value', 'true');
+    value.textContent = resolve(field.xpath);
+    node.appendChild(value);
+    doc.body.appendChild(node);
+  }
+  return doc.body.innerHTML;
+}
