@@ -598,11 +598,11 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
   }).join('');
 
   const headerTitleSt = buildWithOverrides('header-title', { textAlign: 'center', fontWeight: '700', fontSize: '14pt', color: s.colorPrimary, position: 'relative', minHeight: '40px' });
-  const headerVersionSt = buildWithOverrides('header-version', { display: 'flex', justifyContent: 'flex-end', fontWeight: '700', whiteSpace: 'nowrap' });
+  const headerVersionSt = buildWithOverrides('header-version', { display: 'block', width: 'fit-content', alignSelf: 'flex-end', fontWeight: '700', whiteSpace: 'nowrap' });
 
   return `<div class="rg-design" style="font-family:${s.fontFamily};font-size:${s.fontSize};color:${s.colorFont};min-height:${pageSize(s.pageSize).contentHeight}in;display:flex;flex-direction:column">
     <style>${designCss(userStyle)}</style>
-    <div class="header" style="margin-bottom:15px">
+    <div class="header" style="margin-bottom:15px;display:flex;flex-direction:column">
       <div data-rg-id="header-title" data-drag-section="header-title" class="${cls('doc-type', 'doc-type')}" style="${cssStr(headerTitleSt)}">
         ${sectionHandles()}
         DOCUMENTO TRIBUTARIO ELECTRÓNICO<br/>${docTitle || currentConfig.title}
