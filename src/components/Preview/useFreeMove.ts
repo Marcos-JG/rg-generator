@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useConfigStore } from '../../stores/configStore';
-import { movementTarget, movementDelta, alignmentGuides } from '../../core/freeMovement';
+import { movementTarget, movementDelta, alignmentGuides, applyMovementPosition } from '../../core/freeMovement';
 
 export default function useFreeMove(containerRef, active, mode, setSelected, documentKey?: number) {
   useEffect(() => {
@@ -95,9 +95,7 @@ export default function useFreeMove(containerRef, active, mode, setSelected, doc
       }
       const delta = movementDelta(drag.rect, drag.page, dx, dy, drag.scale);
       drag.next = { x: drag.start.x + delta.x, y: drag.start.y + delta.y, z: drag.z };
-      drag.el.style.transform = `translate(${drag.next.x}px, ${drag.next.y}px)`;
-      drag.el.style.position = 'relative';
-      drag.el.style.zIndex = String(drag.z);
+      applyMovementPosition(drag.el, drag.next);
       drag.el.style.outline = '2px solid #3b82f6';
       const offsetX = delta.x * drag.scale;
       const offsetY = delta.y * drag.scale;

@@ -44,6 +44,9 @@ export default function InteractivePreview() {
     onClick(e);
   };
 
+  if (customXslt && !xmlString) {
+    return <div className="studio-empty"><span className="empty-eyebrow">PLANTILLA CARGADA</span><h2>Falta el XML de ejemplo.</h2><p>En Documento → XSLT Propio, carga el XML de ejemplo.<br/>La plantilla usará sus datos para mostrar la preview.</p></div>;
+  }
   if (!xmlString || !currentConfig) {
     return <div className="studio-empty"><div className="empty-paper" aria-hidden="true"><svg viewBox="0 0 64 80" fill="none"><rect x="1" y="1" width="62" height="78" rx="7" stroke="currentColor"/><path d="M16 23h32M16 32h23M16 48h32M16 57h32" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg></div><span className="empty-eyebrow">TU ESPACIO CREATIVO</span><h2>Cada detalle, a tu manera.</h2><p>Abre el menú ☰ y elige Documento para importar un XML.<br/>Después, mueve, ajusta y da forma a tus ideas.</p><div className="empty-features"><span>Edición libre</span><span>Guardado local</span><span>Exportación</span></div></div>;
   }
