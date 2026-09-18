@@ -4,6 +4,7 @@ import { renderImportedXslt } from '../../core/importedXslt';
 import { applySelection, cleanPreviewHtml } from '../../core/editableHtml';
 import useFreeMove from './useFreeMove';
 import StylePanel from './PreviewToolbar';
+import useXmlFieldDrop from './useXmlFieldDrop';
 
 export function importedSnapshot() {
   const doc = document.querySelector<HTMLIFrameElement>('[data-imported-preview]')?.contentDocument;
@@ -15,15 +16,16 @@ export function importedSnapshot() {
 
 export default function ImportedPreview() {
   const { xmlString, customXslt, customXsltName, customXsltFiles, overrides, positions, textOverrides,
-    setOverrides, setText, undo, redo } = useConfigStore();
+    setOverrides, setText, undo, redo, xmlFields = [] } = useConfigStore();
   const page = useRef(null);
   const [ready, setReady] = useState(0);
   const [selected, setSelected] = useState('');
   const [height, setHeight] = useState(1056);
   const result = useMemo(() => {
-    try { return { html: renderImportedXslt(xmlString, customXslt, { overrides, positions, textOverrides }, customXsltFiles) }; }
+    try { return { html: renderImportedXslt(xmlString, customXslt, { overrides, positions, textOverrides, xmlFields }, customXsltFiles) }; }
     catch (error) { return { error: error.message }; }
-  }, [xmlString, customXslt, customXsltFiles, overrides, positions, textOverrides]);
+  }, [xmlString, customXslt, customXsltFiles, overrides, positions, textOverrides, xmlFields]);
+  useXmlFieldDrop(page, Boolean(ready && !result.error), ready);
   useFreeMove(page, Boolean(ready && !result.error), 'elements', setSelected, ready);
   useEffect(() => {
     if (!page.current || result.error) return;

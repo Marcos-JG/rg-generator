@@ -16,6 +16,8 @@ Las rutas y el documento base están en `src/app`. El editor se carga en el nave
 
 ## Edición visual
 
+En **Contenido → Datos del XML**, busca cualquier valor del XML y arrástralo a la hoja. Se agrega una etiqueta con el valor en la posición elegida, tanto en diseños del generador como en XSLT externos. Después puedes moverlo y cambiar su estilo; **Quitar** lo elimina. Los campos agregados se guardan y admiten Deshacer/Rehacer. La descarga XSLT conserva una llamada XPath 1.0 al dato, en lugar de copiar el valor del ejemplo. Los elementos repetidos aparecen por separado: arrastrar uno agrega esa ocurrencia concreta, no una columna para todas las filas. La edición de XSLT externos requiere una salida HTML con un elemento `body`.
+
 El menú **Arrastrar** permite mover campos libremente por la hoja, mover bloques completos (emisor, receptor, totales, logo, etc.) o reordenar filas. Los campos pueden salir de su sección original y superponerse a otros elementos. Se conserva el espacio original para no desplazar los demás campos. Las posiciones se guardan y se incluyen en HTML, PDF y XSLT.
 
 Cambiar el ancho o el alto de un bloque no modifica el tamaño ni la posición de sus vecinos en la misma fila. Si un bloque crece sobre el espacio de otro, ambos pueden superponerse.

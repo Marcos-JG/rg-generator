@@ -13,16 +13,19 @@ export interface DocumentConfig {
 export type ElementStyle = CSSProperties & { separationX?: string; labelWidth?: string; order?: number; fieldOrder?: string[]; columnOrder?: string[]; [key: string]: string | number | string[] | undefined };
 export type Overrides = Record<string, ElementStyle>;
 export interface Position { x: number; y: number; z?: number }
-export interface EditorState { overrides?: Overrides; positions?: Record<string, Position>; textOverrides?: Record<string, string> }
+export interface XmlField { id: string; xpath: string; label: string; x: number; y: number }
+export interface EditorState { overrides?: Overrides; positions?: Record<string, Position>; textOverrides?: Record<string, string>; xmlFields?: XmlField[] }
 export type UserStyle = Record<string, string | string[]> & { enabledFields: string[]; docTitle?: string };
 export type XmlData = ReturnType<typeof extractXmlData>;
 export type Metadata = ReturnType<typeof parseXmlFile>['metadata'];
 export type Update<T> = T | ((previous: T) => T);
 export interface DesignState {
+  xmlFields: XmlField[];
   currentConfig: DocumentConfig | null; userStyle: UserStyle; docTitle: string | null;
   overrides: Overrides; textOverrides: Record<string, string>; positions: Record<string, Position>;
 }
 export interface ConfigStore extends DesignState {
+  addXmlField(field: XmlField): void; removeXmlField(id: string): void;
   xmlString: string | null; metadata: Metadata | null;
   customXslt: string | null; customXsltName: string | null; customXsltFiles: Record<string, string>;
   loadDocument(xml: string, metadata: Metadata, config: DocumentConfig): void;

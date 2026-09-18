@@ -15,8 +15,8 @@ const defaultStyle = (): UserStyle => ({
 });
 
 // History stores the complete design, without duplicating the source XML.
-const designState = ({ currentConfig, userStyle, docTitle, overrides, textOverrides, positions }: DesignState) =>
-  ({ currentConfig, userStyle, docTitle, overrides, textOverrides, positions });
+const designState = ({ currentConfig, userStyle, docTitle, overrides, textOverrides, positions, xmlFields }: DesignState) =>
+  ({ currentConfig, userStyle, docTitle, overrides, textOverrides, positions, xmlFields: xmlFields || [] });
 
 export const useConfigStore = create<ConfigStore>()(persist((set, get) => {
   const commit = (updates: Partial<ConfigStore> | ((state: ConfigStore) => Partial<ConfigStore>)) => {
@@ -33,17 +33,24 @@ export const useConfigStore = create<ConfigStore>()(persist((set, get) => {
   return {
     xmlString: null, metadata: null, currentConfig: null,
     customXslt: null, customXsltName: null, customXsltFiles: {}, docTitle: null,
-    userStyle: defaultStyle(), overrides: {}, textOverrides: {}, positions: {},
+    userStyle: defaultStyle(), overrides: {}, textOverrides: {}, positions: {}, xmlFields: [],
+    addXmlField: field => commit(state => ({ xmlFields: [...(state.xmlFields || []), field] })),
+    removeXmlField: id => commit(state => {
+      const overrides = { ...state.overrides }, positions = { ...state.positions }, textOverrides = { ...state.textOverrides };
+      delete overrides[id]; delete positions[id];
+      Object.keys(textOverrides).filter(key => key.startsWith(id + ':')).forEach(key => delete textOverrides[key]);
+      return { xmlFields: (state.xmlFields || []).filter(field => field.id !== id), overrides, positions, textOverrides };
+    }),
     loadDocument: (xmlString, metadata, currentConfig) => {
       useHistoryStore.getState().clear();
-      set({ xmlString, metadata, currentConfig, overrides: {}, textOverrides: {}, positions: {}, docTitle: null });
+      set({ xmlString, metadata, currentConfig, overrides: {}, textOverrides: {}, positions: {}, xmlFields: [], docTitle: null });
     },
     setXmlString: (xmlString) => set({ xmlString }),
     setMetadata: (metadata) => set({ metadata }),
     setCurrentConfig: (currentConfig) => commit({ currentConfig }),
     setCustomXslt: (customXslt, customXsltName) => {
       useHistoryStore.getState().clear();
-      set({ customXslt, customXsltName, customXsltFiles: {}, overrides: {}, positions: {}, textOverrides: {} });
+      set({ customXslt, customXsltName, customXsltFiles: {}, overrides: {}, positions: {}, textOverrides: {}, xmlFields: [] });
     },
     addCustomXsltFiles: files => set(state => ({ customXsltFiles: { ...state.customXsltFiles, ...files } })),
     setDocTitle: (docTitle) => commit({ docTitle }),
@@ -59,7 +66,7 @@ export const useConfigStore = create<ConfigStore>()(persist((set, get) => {
     resetAll: () => {
       useHistoryStore.getState().clear();
       set({ xmlString: null, metadata: null, currentConfig: null, customXslt: null,
-        customXsltName: null, customXsltFiles: {}, docTitle: null, userStyle: defaultStyle(), overrides: {}, textOverrides: {}, positions: {} });
+        customXsltName: null, customXsltFiles: {}, docTitle: null, userStyle: defaultStyle(), overrides: {}, textOverrides: {}, positions: {}, xmlFields: [] });
     },
   };
 }, {

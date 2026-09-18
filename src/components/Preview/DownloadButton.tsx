@@ -15,7 +15,7 @@ const BASE_TEMPLATE = baseTemplate;
 const DOCUMENT_RENDER_CSS = documentCss();
 
 export default function DownloadButton() {
-  const { xmlString, currentConfig, userStyle, metadata, customXslt, customXsltName, customXsltFiles, docTitle, overrides, positions, textOverrides } = useConfigStore();
+  const { xmlString, currentConfig, userStyle, metadata, customXslt, customXsltName, customXsltFiles, docTitle, overrides, positions, textOverrides, xmlFields = [] } = useConfigStore();
 
   const handleDownloadXsl = () => {
     if (!currentConfig) return;
@@ -24,7 +24,7 @@ export default function DownloadButton() {
     let fileName;
 
     if (customXslt) {
-      xslt = editImportedXslt(customXslt, { overrides, positions, textOverrides });
+      xslt = editImportedXslt(customXslt, { overrides, positions, textOverrides, xmlFields });
       fileName = customXsltName || 'custom.xsl';
     } else {
       let xmlData = null;
@@ -35,7 +35,7 @@ export default function DownloadButton() {
           if (!xmlDoc.querySelector('parsererror')) xmlData = extractXmlData(xmlDoc);
         } catch (e) { /* ignore */ }
       }
-      xslt = generateXslt(BASE_TEMPLATE, currentConfig, { ...userStyle, docTitle }, xmlData, { overrides, positions, textOverrides });
+      xslt = generateXslt(BASE_TEMPLATE, currentConfig, { ...userStyle, docTitle }, xmlData, { overrides, positions, textOverrides, xmlFields });
       fileName = `RG-${metadata?.country || 'XX'}-${currentConfig.docType}-${currentConfig.title.replace(/\s+/g, '_')}.xsl`;
     }
 
