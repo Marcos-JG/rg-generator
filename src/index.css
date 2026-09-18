@@ -61,6 +61,7 @@ body { margin: 0; }
 .studio-canvas-toolbar :is(button,select) { border: 0; border-radius: 7px; font-size: 11px; min-height: 30px; cursor: pointer; background: transparent; }
 .studio-canvas-toolbar button:hover:not(:disabled) { background: #f0f4fb; }
 .canvas-mode select { padding: 0 28px 0 9px; max-width: 148px; }
+.studio-canvas-toolbar { zoom: var(--canvas-control-zoom, 1); }
 .canvas-toolbar-divider { width: 1px; height: 20px; background: #00000012; margin: 0 2px; }
 .canvas-icon-button { width: 30px; height: 30px; display: grid; place-items: center; padding: 0; }
 .canvas-icon-button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }

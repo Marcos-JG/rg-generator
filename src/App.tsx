@@ -10,8 +10,10 @@ import AdendaConfig from './components/ConfigPanel/AdendaConfig';
 import XmlDataPalette from './components/ConfigPanel/XmlDataPalette';
 import InteractivePreview from './components/Preview/InteractivePreview';
 import ImportedPreview from './components/Preview/ImportedPreview';
+import useDocumentZoom from './components/Preview/useDocumentZoom';
 import { useConfigStore } from './stores/configStore';
 import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 
 export default function App() {
   const imported = useConfigStore(state => Boolean(state.customXslt && state.xmlString));
@@ -23,6 +25,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [zoom, setZoom] = useState(100);
   const previewViewport = useRef<HTMLDivElement>(null);
+  useDocumentZoom(previewViewport, setZoom);
   const resetView = () => {
     setZoom(100);
     previewViewport.current?.scrollTo({ top: 0, left: 0 });
@@ -69,7 +72,7 @@ export default function App() {
 
         <main className="studio-workspace flex-1 min-w-0 flex flex-col overflow-hidden relative" aria-label="Área de edición">
           <div ref={previewViewport} className="flex-1 min-h-0 overflow-auto">
-            <div style={{ zoom: zoom / 100, height: '100%' }}>
+            <div style={{ zoom: zoom / 100, height: '100%', '--canvas-control-zoom': 100 / zoom } as CSSProperties}>
             {imported ? <ImportedPreview /> : <InteractivePreview />}
             </div>
           </div>
