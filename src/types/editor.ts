@@ -14,7 +14,7 @@ export type ElementStyle = CSSProperties & { separationX?: string; labelWidth?: 
 export type Overrides = Record<string, ElementStyle>;
 export interface Position { x: number; y: number; z?: number }
 export interface XmlField { id: string; xpath: string; label: string; x: number; y: number; kind?: 'logo' }
-export interface EditorState { overrides?: Overrides; positions?: Record<string, Position>; textOverrides?: Record<string, string>; xmlFields?: XmlField[] }
+export interface EditorState { overrides?: Overrides; positions?: Record<string, Position>; textOverrides?: Record<string, string>; xmlFields?: XmlField[]; visualStyle?: Partial<UserStyle> }
 export type UserStyle = Record<string, string | string[]> & { enabledFields: string[]; docTitle?: string };
 export type XmlData = ReturnType<typeof extractXmlData>;
 export type Metadata = ReturnType<typeof parseXmlFile>['metadata'];

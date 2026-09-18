@@ -59,6 +59,17 @@ it('gives source elements stable identities and wraps only literal labels', () =
   expect(doc.querySelector('[data-rg-id="import-1"] [data-rg-text]').getAttribute('data-rg-text')).toBe('import-label-0:text:0');
   expect(doc.querySelector('[data-rg-id="import-2"] [data-rg-text]')).toBeNull();
 });
+it('exports opt-in document design without changing bindings or adding styles to untouched templates', () => {
+  const unchanged = parseImportedXslt(editImportedXslt(source));
+  expect(unchanged.querySelector('style')).toBeNull();
+  const doc = parseImportedXslt(editImportedXslt(source.replace('<body>', '<head></head><body>'), {
+    visualStyle: { designLineHeight: '1.8', designFontFamily: 'Georgia, serif', designCellPadding: '8px', designBorderWidth: '2px' },
+  }));
+  expect(doc.querySelector('head style').textContent).toContain('line-height:1.8');
+  expect(doc.querySelector('head style').textContent).toContain('font-family:Georgia, serif');
+  expect(doc.querySelector('head style').textContent).toContain('padding:8px');
+  expect(doc.getElementsByTagNameNS('http://www.w3.org/1999/XSL/Transform', 'value-of')[0].getAttribute('select')).toBe('Root/Name');
+});
 it.skipIf(process.platform !== 'win32')('transforms the supplied standard and edited stylesheet with .NET while keeping future XML data live', () => {
   const folder = mkdtempSync(join(tmpdir(), 'rg-import-'));
   try {

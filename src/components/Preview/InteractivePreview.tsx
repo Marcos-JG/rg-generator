@@ -1,4 +1,4 @@
-import { useState, useRef, useLayoutEffect, useMemo } from 'react';
+import { useState, useRef, useLayoutEffect, useMemo, useEffect } from 'react';
 import { useConfigStore } from '../../stores/configStore';
 import { useHistoryStore } from '../../stores/historyStore';
 import { extractXmlData } from '../../core/xmlParser';
@@ -11,6 +11,7 @@ import { buildPreviewHtml } from './buildPreviewHtml';
 import StylePanel from './PreviewToolbar';
 import { editableHtml, applySelection } from '../../core/editableHtml';
 import { documentCss } from '../../core/documentCss';
+import { pageSize } from '../../core/pageSize';
 import { appendXmlFieldsHtml, xmlValue } from '../../core/xmlFields';
 import useXmlFieldDrop from './useXmlFieldDrop';
 import { normalizeXmlSource } from '../../core/xmlSource';
@@ -36,6 +37,12 @@ export default function InteractivePreview() {
     updateStyle, applyUndo, applyRedo,
   } = useSelection(containerRef, overrides, setOverrides, renderKey, setRenderKey);
   useFreeMove(containerRef, active, moveMode, setSelected);
+  const previousFields = useRef(new Set(xmlFields.map(field => field.id)));
+  useEffect(() => {
+    const added = xmlFields.find(field => !previousFields.current.has(field.id));
+    previousFields.current = new Set(xmlFields.map(field => field.id));
+    if (added) setSelected(added.id);
+  }, [xmlFields, setSelected]);
   useLayoutEffect(() => {
     if (containerRef.current && active) applySelection(containerRef.current, { selected, hovered });
   });
@@ -115,7 +122,7 @@ export default function InteractivePreview() {
         <span className="canvas-saved" title="Los cambios se guardan automáticamente" aria-label="Guardado automático activo" />
       </div>}
       <style>{`
-        ${documentCss('[data-preview-content]')}
+        ${documentCss('[data-preview-content]', userStyle.pageSize)}
         [data-preview-content] {
           font-family: Arial, sans-serif;
           font-size: 7pt;
@@ -188,7 +195,7 @@ export default function InteractivePreview() {
         className="bg-white shadow-lg"
         data-preview-content
         data-move-mode={moveMode}
-        style={{ width: '8.5in', minHeight: '11in', height: 'auto', margin: '0 auto', padding: '0.25in', boxSizing: 'border-box', position: 'relative', overflow: 'visible', cursor: 'default' }}
+        style={{ width: '8.5in', minHeight: `${pageSize(userStyle.pageSize).height}in`, height: 'auto', margin: '0 auto', padding: '0.25in', boxSizing: 'border-box', position: 'relative', overflow: 'visible', cursor: 'default' }}
         html={html}
         onClick={handleContainerClick}
         onDoubleClick={onDblClick}

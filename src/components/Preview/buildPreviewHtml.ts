@@ -1,6 +1,8 @@
 interface PreviewBindings { date?: string; time?: string; money?: (value: string) => string; logo?: string; qr?: string; itemNumber?: string; footer?: string; model?: string; transmission?: string }
 import { cssStr } from './helpers';
 import { buildFooterText } from '../../core/svFormat';
+import { designCss } from '../../core/designCss';
+import { pageSize } from '../../core/pageSize';
 
 export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides, selected = '', hovered = '', docTitle, bindings = {} as PreviewBindings }) {
   const s = { ...currentConfig.style, ...userStyle };
@@ -306,7 +308,7 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
 
   const renderSection = (sec) => {
     if (sec === 'emisor') {
-      const emisorSt = buildBlockOuter('emisor', sectionOuterStyle({ border: '1px solid ' + s.colorBorder, borderRadius: '5px', boxSizing: 'border-box', overflow: 'visible' }));
+      const emisorSt = buildBlockOuter('emisor', sectionOuterStyle({ border: '1px solid ' + s.colorBorder, borderRadius: s.designRadius || '5px', boxSizing: 'border-box', overflow: 'visible' }));
       const emisorInnerMerged = buildBlockContent('emisor', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' });
       delete emisorInnerMerged.marginTop;
       delete emisorInnerMerged.marginBottom;
@@ -320,13 +322,13 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
         <div class="section-content" style="${cssStr(emisorInnerSt)}">
           <div style="text-align:center;font-weight:bold;margin-bottom:4px">EMISOR</div>
           <div class="section-seller" style="flex:1;min-height:min-content;box-sizing:border-box">
-            <table width="100%" height="100%" cellPadding="0" cellSpacing="0" border="0">${sellerRows}</table>
+            <table width="100%" height="100%" cellPadding="0" cellSpacing="0" border="0" style="background:transparent">${sellerRows}</table>
           </div>
         </div>
       </div>`;
     }
     if (sec === 'receptor') {
-      const receptorSt = buildBlockOuter('receptor', sectionOuterStyle({ border: '1px solid ' + s.colorBorder, borderRadius: '5px', boxSizing: 'border-box', overflow: 'visible' }));
+      const receptorSt = buildBlockOuter('receptor', sectionOuterStyle({ border: '1px solid ' + s.colorBorder, borderRadius: s.designRadius || '5px', boxSizing: 'border-box', overflow: 'visible' }));
       const receptorInnerMerged = buildBlockContent('receptor', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' });
       delete receptorInnerMerged.marginTop;
       delete receptorInnerMerged.marginBottom;
@@ -340,7 +342,7 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
         <div class="section-content" style="${cssStr(receptorInnerSt)}">
           <div style="text-align:center;font-weight:bold;margin-bottom:4px">RECEPTOR</div>
           <div class="section-buyer" style="flex:1;min-height:min-content;box-sizing:border-box">
-            <table width="100%" height="100%" cellPadding="0" cellSpacing="0" border="0">${buyerRows}</table>
+            <table width="100%" height="100%" cellPadding="0" cellSpacing="0" border="0" style="background:transparent">${buyerRows}</table>
           </div>
         </div>
       </div>`;
@@ -598,7 +600,8 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
   const headerTitleSt = buildWithOverrides('header-title', { textAlign: 'center', fontWeight: '700', fontSize: '14pt', color: s.colorPrimary, position: 'relative', minHeight: '40px' });
   const headerVersionSt = buildWithOverrides('header-version', { display: 'flex', justifyContent: 'flex-end', fontWeight: '700', whiteSpace: 'nowrap' });
 
-  return `<div style="font-family:${s.fontFamily};font-size:${s.fontSize};color:${s.colorFont};min-height:10.5in;display:flex;flex-direction:column">
+  return `<div class="rg-design" style="font-family:${s.fontFamily};font-size:${s.fontSize};color:${s.colorFont};min-height:${pageSize(s.pageSize).contentHeight}in;display:flex;flex-direction:column">
+    <style>${designCss(userStyle)}</style>
     <div class="header" style="margin-bottom:15px">
       <div data-rg-id="header-title" data-drag-section="header-title" class="${cls('doc-type', 'doc-type')}" style="${cssStr(headerTitleSt)}">
         ${sectionHandles()}

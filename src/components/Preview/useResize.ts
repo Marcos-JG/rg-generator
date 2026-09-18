@@ -6,6 +6,8 @@ export default function useResize(containerRef, overrides, setOverrides, renderK
   useEffect(() => {
     const el = containerRef.current;
     if (!el || !active) return;
+    const eventWindow = el.ownerDocument.defaultView || window;
+    const eventBody = el.ownerDocument.body;
 
     const onMouseDown = (e) => {
       const handle = e.target.closest('[data-resize="row"]')
@@ -53,12 +55,12 @@ export default function useResize(containerRef, overrides, setOverrides, renderK
         el: targetEl, startPad,
       };
 
-      if (dir === 'row') document.body.style.cursor = 'ns-resize';
-      else if (dir === 'e' || dir === 'w') document.body.style.cursor = 'ew-resize';
-      else if (dir === 'h' || dir === 'n') document.body.style.cursor = 'ns-resize';
-      else document.body.style.cursor = 'nwse-resize';
+      if (dir === 'row') eventBody.style.cursor = 'ns-resize';
+      else if (dir === 'e' || dir === 'w') eventBody.style.cursor = 'ew-resize';
+      else if (dir === 'h' || dir === 'n') eventBody.style.cursor = 'ns-resize';
+      else eventBody.style.cursor = 'nwse-resize';
 
-      document.body.style.userSelect = 'none';
+      eventBody.style.userSelect = 'none';
       el.setAttribute('data-resizing', '1');
     };
 
@@ -107,8 +109,8 @@ export default function useResize(containerRef, overrides, setOverrides, renderK
       const rowPad = padTarget ? padTarget.style.paddingTop : '';
 
       state.current = null;
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+      eventBody.style.cursor = '';
+      eventBody.style.userSelect = '';
       el.removeAttribute('data-resizing');
 
       setOverrides((prev) => {
@@ -135,14 +137,14 @@ export default function useResize(containerRef, overrides, setOverrides, renderK
 
     el.addEventListener('mousedown', onMouseDown);
     el.addEventListener('dragstart', onDragStart, true);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    eventWindow.addEventListener('mousemove', onMouseMove);
+    eventWindow.addEventListener('mouseup', onMouseUp);
 
     return () => {
       el.removeEventListener('mousedown', onMouseDown);
       el.removeEventListener('dragstart', onDragStart, true);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      eventWindow.removeEventListener('mousemove', onMouseMove);
+      eventWindow.removeEventListener('mouseup', onMouseUp);
     };
   }, [containerRef, overrides, setOverrides, renderKey, setRenderKey, active]);
 }

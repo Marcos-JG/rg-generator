@@ -9,13 +9,15 @@ import { isReferenceDocument } from '../../core/referenceXslt';
 import { editImportedXslt } from '../../core/importedXslt';
 import { importedSnapshot } from './ImportedPreview';
 import { normalizeXmlSource } from '../../core/xmlSource';
+import { pageSize } from '../../core/pageSize';
+import { withPrintFit } from '../../core/printFit';
 
 const BASE_TEMPLATE = baseTemplate;
 
-const DOCUMENT_RENDER_CSS = documentCss();
 
 export default function DownloadButton() {
   const { xmlString, currentConfig, userStyle, metadata, customXslt, customXsltName, customXsltFiles, docTitle, overrides, positions, textOverrides, xmlFields = [] } = useConfigStore();
+  const DOCUMENT_RENDER_CSS = documentCss('.dte-page-wrap', userStyle.pageSize);
 
   const handleDownloadXsl = () => {
     if (!currentConfig) return;
@@ -24,7 +26,7 @@ export default function DownloadButton() {
     let fileName;
 
     if (customXslt) {
-      xslt = editImportedXslt(customXslt, { overrides, positions, textOverrides, xmlFields });
+      xslt = editImportedXslt(customXslt, { overrides, positions, textOverrides, xmlFields, visualStyle: userStyle });
       fileName = customXsltName || 'custom.xsl';
     } else {
       let xmlData = null;
@@ -68,7 +70,7 @@ export default function DownloadButton() {
 </body>
 </html>`;
 
-    const blob = new Blob([fullHtml], { type: 'text/html' });
+    const blob = new Blob([withPrintFit(fullHtml, userStyle.pageSize)], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -86,7 +88,7 @@ export default function DownloadButton() {
 
     const printCss = `
       @media print {
-        @page { size: letter; margin: 0; }
+        @page { size: 8.5in ${pageSize(userStyle.pageSize).height}in; margin: 0; }
         body { font-size: 7pt; }
         .dte-page-wrap { width: 8.5in; margin: 0 auto; }
       }
@@ -107,7 +109,7 @@ export default function DownloadButton() {
 
     const win = window.open('', '_blank');
     if (win) {
-      win.document.write(fullHtml);
+      win.document.write(withPrintFit(fullHtml, userStyle.pageSize));
       win.document.close();
       win.onload = () => win.print();
     }

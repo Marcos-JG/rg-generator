@@ -5,7 +5,7 @@ export default function Sidebar({ children, panel, onPanelChange }) {
   const resetAll = useConfigStore(s => s.resetAll);
   return (
     <aside className="studio-sidebar" aria-label="Configuración del documento">
-      <div className="inspector-heading"><span>Inspector</span><span className="inspector-caption">Personaliza tu documento</span></div>
+      <div className="inspector-heading"><span>Inspector</span><span className="inspector-caption">{panel === 'documento' ? 'Importa y configura tu documento' : panel === 'contenido' ? 'Agrega datos y elige qué mostrar' : 'Personaliza el aspecto del documento'}</span></div>
       <nav className="studio-segments" aria-label="Secciones del inspector">
         {panels.map(([id, label]) => <button key={id} aria-pressed={panel === id} onClick={() => onPanelChange(id)}>{label}</button>)}
       </nav>

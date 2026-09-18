@@ -8,7 +8,7 @@ import { xmlDataFields, xmlPaletteFields, appendXmlFieldsHtml } from '../src/cor
 import { editImportedXslt } from '../src/core/importedXslt';
 import { generateEditorXslt } from '../src/core/editorXslt';
 import { applyMovementPosition } from '../src/core/freeMovement';
-import { editableHtml, cleanPreviewHtml } from '../src/core/editableHtml';
+import { editableHtml, cleanPreviewHtml, applySelection } from '../src/core/editableHtml';
 import { useConfigStore } from '../src/stores/configStore';
 import ccf from '../src/configs/sv/ccf.json';
 
@@ -40,6 +40,33 @@ it('adds the issuer logo as an image with an XML binding', () => {
   expect(doc.querySelector('div').style.position).toBe('absolute');
   expect(doc.querySelector('button').getAttribute('aria-label')).toBe('Eliminar Logo del emisor');
   expect(cleanPreviewHtml(doc.body)).not.toContain('button');
+});
+it('shows the remove button only on the selected added field, never on hover', () => {
+  const doc = new DOMParser().parseFromString(appendXmlFieldsHtml('', [field(), logo()], () => 'Ana', {}), 'text/html');
+  expect(doc.querySelectorAll('[data-rg-remove]:not([hidden])')).toHaveLength(0);
+  applySelection(doc.body, { hovered: field().id });
+  expect(doc.querySelectorAll('[data-rg-remove]:not([hidden])')).toHaveLength(0);
+  applySelection(doc.body, { selected: field().id });
+  expect(doc.querySelectorAll('[data-rg-remove]:not([hidden])')).toHaveLength(1);
+  expect(doc.querySelector('[data-rg-remove]:not([hidden])').getAttribute('data-rg-remove')).toBe(field().id);
+  applySelection(doc.body, { selected: logo().id });
+  expect(doc.querySelector('[data-rg-remove]:not([hidden])').getAttribute('data-rg-remove')).toBe(logo().id);
+  applySelection(doc.body, {});
+  expect(doc.querySelectorAll('[data-rg-remove]:not([hidden])')).toHaveLength(0);
+});
+it('makes added data resizable and preserves its dimensions without exporting editor handles', () => {
+  const doc = new DOMParser().parseFromString(appendXmlFieldsHtml('', [field()], () => 'Ana', {
+    overrides: { [field().id]: { width: '320px', height: '80px', fontSize: '24px' } },
+  }), 'text/html');
+  const node = doc.querySelector<HTMLElement>('[data-rg-id]');
+  expect(node.getAttribute('data-drag-section')).toBe(field().id);
+  expect(node.querySelector('[data-resize="he"]')).not.toBeNull();
+  expect(node.style.width).toBe('320px'); expect(node.style.height).toBe('80px');
+  expect(node.style.fontSize).toBe('24px');
+  const exported = new DOMParser().parseFromString(cleanPreviewHtml(doc.body), 'text/html');
+  expect(exported.querySelector('[data-resize]')).toBeNull();
+  expect(exported.querySelector('div').style.width).toBe('320px');
+  expect(exported.body.textContent).toContain('Ana');
 });
 
 it('keeps an added field out of document flow during its first and subsequent moves and after saving', () => {

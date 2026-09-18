@@ -31,6 +31,9 @@ export function editableHtml(html, textOverrides = {}, positions = {}, selection
 // Update highlights in place so hovering/selecting never replaces document nodes
 // or disrupts the browser's scroll anchor, focus and pointer target.
 export function applySelection(root, selection: Selection = {}) {
+  root.querySelectorAll('[data-rg-remove]').forEach(button => {
+    button.toggleAttribute('hidden', button.getAttribute('data-rg-remove') !== selection.selected);
+  });
   root.querySelectorAll('[data-resize-active]').forEach(el => el.removeAttribute('data-resize-active'));
   root.querySelectorAll('.rg-sel, .rg-hover').forEach(el => el.classList.remove('rg-sel', 'rg-hover'));
   for (const el of root.querySelectorAll('[data-rg-id]')) {

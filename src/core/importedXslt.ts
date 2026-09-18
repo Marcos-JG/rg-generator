@@ -1,6 +1,8 @@
 import { bundleXsltDocument } from './referenceXslt';
 import { normalizeXmlSource } from './xmlSource';
 import { xmlFieldElement } from './xmlFields';
+import { designCss } from './designCss';
+import { printFitScript } from './printFit';
 
 const XSL = 'http://www.w3.org/1999/XSL/Transform';
 const selectable = new Set(['div', 'table', 'td', 'th', 'p', 'span', 'b', 'strong', 'img', 'hr', 'h1', 'h2', 'h3']);
@@ -29,7 +31,7 @@ export function parseImportedXslt(source) {
 
 // Patch literal result elements in the original stylesheet; never rebuild its
 // XPath expressions, conditions, loops, named templates or includes.
-export function editImportedXsltDocument(source, { overrides = {}, positions = {}, textOverrides = {}, xmlFields = [] }: import('../types/editor').EditorState = {}, preview = false) {
+export function editImportedXsltDocument(source, { overrides = {}, positions = {}, textOverrides = {}, xmlFields = [], visualStyle = {} }: import('../types/editor').EditorState = {}, preview = false) {
   const doc = parseImportedXslt(source);
   const elements = [...doc.getElementsByTagName('*')].filter(node =>
     node.namespaceURI !== XSL && selectable.has(node.localName) &&
@@ -102,6 +104,27 @@ export function editImportedXsltDocument(source, { overrides = {}, positions = {
       const span = doc.createElement('span');
       if (preview) span.setAttribute('data-rg-value', 'true');
       span.appendChild(value); node.appendChild(span); body.appendChild(node);
+    }
+  }
+  const globalCss = designCss(visualStyle, 'body');
+  if (globalCss) {
+    let head = [...doc.getElementsByTagName('*')].find(node => node.namespaceURI !== XSL && node.localName === 'head');
+    if (!head) {
+      const body = [...doc.getElementsByTagName('*')].find(node => node.namespaceURI !== XSL && node.localName === 'body');
+      if (body?.parentElement?.localName === 'html') {
+        head = doc.createElementNS(body.namespaceURI, 'head');
+        body.parentElement.insertBefore(head, body);
+      }
+    }
+    if (head) {
+      const styles = doc.createElementNS(head.namespaceURI, 'style');
+      styles.textContent = globalCss;
+      head.appendChild(styles);
+      if (!preview && visualStyle.pageSize) {
+        const script = doc.createElementNS(head.namespaceURI, 'script');
+        script.textContent = printFitScript(visualStyle.pageSize);
+        head.appendChild(script);
+      }
     }
   }
   return doc;

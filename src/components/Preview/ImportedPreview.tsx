@@ -5,6 +5,8 @@ import { applySelection, cleanPreviewHtml } from '../../core/editableHtml';
 import useFreeMove from './useFreeMove';
 import StylePanel from './PreviewToolbar';
 import useXmlFieldDrop from './useXmlFieldDrop';
+import useResize from './useResize';
+import { pageSize } from '../../core/pageSize';
 
 export function importedSnapshot() {
   const doc = document.querySelector<HTMLIFrameElement>('[data-imported-preview]')?.contentDocument;
@@ -15,17 +17,24 @@ export function importedSnapshot() {
 }
 
 export default function ImportedPreview() {
-  const { xmlString, customXslt, customXsltName, customXsltFiles, overrides, positions, textOverrides,
+  const { xmlString, customXslt, customXsltName, customXsltFiles, overrides, positions, textOverrides, userStyle,
     setOverrides, setText, undo, redo, xmlFields = [] } = useConfigStore();
   const page = useRef(null);
   const [ready, setReady] = useState(0);
   const [selected, setSelected] = useState('');
+  const previousFields = useRef(new Set(xmlFields.map(field => field.id)));
+  useEffect(() => {
+    const added = xmlFields.find(field => !previousFields.current.has(field.id));
+    previousFields.current = new Set(xmlFields.map(field => field.id));
+    if (added) setSelected(added.id);
+  }, [xmlFields]);
   const [height, setHeight] = useState(1056);
   const result = useMemo(() => {
-    try { return { html: renderImportedXslt(xmlString, customXslt, { overrides, positions, textOverrides, xmlFields }, customXsltFiles) }; }
+    try { return { html: renderImportedXslt(xmlString, customXslt, { overrides, positions, textOverrides, xmlFields, visualStyle: userStyle }, customXsltFiles) }; }
     catch (error) { return { error: error.message }; }
-  }, [xmlString, customXslt, customXsltFiles, overrides, positions, textOverrides, xmlFields]);
+  }, [xmlString, customXslt, customXsltFiles, overrides, positions, textOverrides, xmlFields, userStyle]);
   useXmlFieldDrop(page, Boolean(ready && !result.error), ready);
+  useResize(page, overrides, setOverrides, ready, setReady, Boolean(ready && !result.error));
   useFreeMove(page, Boolean(ready && !result.error), 'elements', setSelected, ready);
   useEffect(() => {
     if (!page.current || result.error) return;
@@ -39,8 +48,9 @@ export default function ImportedPreview() {
     doc.body.setAttribute('data-move-mode', 'elements');
     const style = doc.createElement('style');
     style.setAttribute('data-import-editor', 'true');
-    style.textContent = 'body{position:relative;min-height:11in} [data-rg-id]{cursor:move;touch-action:none} .rg-sel{outline:2px solid #3b82f6!important;outline-offset:-2px} [contenteditable=true]{cursor:text;outline:2px solid #22c55e}';
+    style.textContent = `body{position:relative;min-height:${pageSize(userStyle.pageSize).height}in} [data-rg-id]{cursor:move;touch-action:none} .rg-sel{outline:2px solid #3b82f6!important;outline-offset:-2px} [contenteditable=true]{cursor:text;outline:2px solid #22c55e}`;
     doc.head.appendChild(style);
+    style.textContent += ' [data-drag-section^="xml-field-"]:is(.rg-sel,:hover)>[data-resize]::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border:2px solid #007aff;border-radius:3px;background:white;pointer-events:none;}';
     doc.body.addEventListener('dblclick', e => {
       const label = e.target.closest('[data-rg-text]');
       if (!label) return;

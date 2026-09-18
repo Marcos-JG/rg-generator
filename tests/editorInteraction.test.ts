@@ -49,8 +49,8 @@ describe('direct editing interactions', () => {
     await act(() => host.querySelector('[data-rg-id="item-0-Description"]').dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(host.querySelector('.rg-sel').dataset.rgId).toBe('items');
     expect(host.querySelector('.rg-hover')).toBeNull();
-    expect(host.querySelector('aside').textContent).toContain('Detalle de ítems');
-    expect(host.querySelector('aside').textContent).not.toContain('section-items');
+    expect(document.querySelector('aside[aria-label="Formato del elemento"]').textContent).toContain('Detalle de ítems');
+    expect(document.querySelector('aside[aria-label="Formato del elemento"]').textContent).not.toContain('section-items');
   });
   it('accepts the next selection after a cancelled drag without a trailing click', async () => {
     const { el } = geometry();
@@ -175,7 +175,7 @@ describe('direct editing interactions', () => {
     expect(text().textContent).toBe(original);
     expect(useConfigStore.getState().textOverrides).toEqual({});
     await act(() => text().dispatchEvent(new MouseEvent('click', { bubbles: true })));
-    const input = host.querySelector('input');
+    const input = document.querySelector('aside[aria-label="Formato del elemento"] input');
     await act(() => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
     expect(useConfigStore.getState().overrides).toEqual({});
   });

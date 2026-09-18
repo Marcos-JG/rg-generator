@@ -53,7 +53,7 @@ export function xmlPaletteFields(source: string): XmlDatum[] {
 export function xmlFieldElement(doc: Document, field: XmlField, editor: EditorState, preview: boolean): Element {
   const node = doc.createElement('div');
   const style = document.createElement('div').style;
-  style.cssText = `position:absolute;left:${field.x}px;top:${field.y}px;width:220px;min-height:20px;z-index:10;font:12px Arial,sans-serif;color:#111;white-space:pre-wrap;overflow-wrap:anywhere;`;
+  style.cssText = `position:absolute;left:${field.x}px;top:${field.y}px;width:220px;min-height:20px;z-index:10;font-size:12px;font-family:Arial,sans-serif;color:#111;white-space:pre-wrap;overflow-wrap:anywhere;`;
   if (field.kind === 'logo') { style.width = '160px'; style.height = '100px'; }
   for (const [key, value] of Object.entries(editor.overrides?.[field.id] || {})) {
     if ((typeof value === 'string' || typeof value === 'number') && key in style) style.setProperty(key.replace(/[A-Z]/g, char => '-' + char.toLowerCase()), String(value));
@@ -63,8 +63,23 @@ export function xmlFieldElement(doc: Document, field: XmlField, editor: EditorSt
   node.setAttribute('style', style.cssText);
   if (preview) {
     node.setAttribute('data-rg-id', field.id);
+    node.setAttribute('data-drag-section', field.id);
+    for (const [direction, edges, cursor] of [
+      ['n', 'top:0;left:0;right:0;height:6px', 'ns-resize'],
+      ['h', 'bottom:0;left:0;right:0;height:6px', 'ns-resize'],
+      ['w', 'top:0;bottom:0;left:0;width:6px', 'ew-resize'],
+      ['e', 'top:0;bottom:0;right:0;width:6px', 'ew-resize'],
+      ['he', 'bottom:0;right:0;width:12px;height:12px', 'nwse-resize'],
+    ]) {
+      const handle = doc.createElement('div');
+      handle.setAttribute('data-resize', direction);
+      handle.setAttribute('draggable', 'false');
+      handle.setAttribute('style', `position:absolute;${edges};cursor:${cursor};z-index:20;pointer-events:auto;`);
+      node.appendChild(handle);
+    }
     const remove = doc.createElement('button');
     remove.setAttribute('type', 'button'); remove.setAttribute('data-rg-remove', field.id);
+    remove.setAttribute('hidden', '');
     remove.setAttribute('aria-label', `Eliminar ${field.label}`);
     remove.setAttribute('title', `Eliminar ${field.label}`);
     remove.setAttribute('style', 'position:absolute;top:-10px;right:-10px;width:20px;height:20px;border:1px solid #fecaca;border-radius:50%;background:white;color:#dc2626;font:16px Arial;line-height:18px;cursor:pointer;z-index:100;padding:0;');

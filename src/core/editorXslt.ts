@@ -2,6 +2,7 @@ import { buildPreviewHtml } from '../components/Preview/buildPreviewHtml';
 import { editableHtml } from './editableHtml';
 import { escapeXml as esc } from './escapeXml';
 import { documentCss } from './documentCss';
+import { printFitScript } from './printFit';
 import { bundleXslt, isReferenceDocument } from './referenceXslt';
 import { appendXmlFieldsHtml } from './xmlFields';
 
@@ -157,7 +158,7 @@ export function generateEditorXslt(config, userStyle: Partial<import('../types/e
     <xsl:include href="RG-SharedSV_fel_2.xslt"/><xsl:include href="Shared_ENLETRAS_fel_2.xslt"/>
     <xsl:output method="html" encoding="UTF-8" indent="no" doctype-system="about:legacy-compat"/>
     <xsl:template match="/">${variables}<html><head><meta charset="UTF-8"/><title>${esc(userStyle.docTitle || config.title)}</title>
-    <style>${esc('html,body{margin:0;padding:0;}'+documentCss())}</style></head><body><div class="dte-page-wrap">${[...doc.body.childNodes].map(emit).join('')}</div></body></html></xsl:template>
+    <style>${esc('html,body{margin:0;padding:0;}'+documentCss('.dte-page-wrap', userStyle.pageSize))}</style><script>${esc(printFitScript(userStyle.pageSize))}</script></head><body><div class="dte-page-wrap">${[...doc.body.childNodes].map(emit).join('')}</div></body></html></xsl:template>
   </xsl:stylesheet>`;
   return isReferenceDocument(config) ? stylesheet : bundleXslt(stylesheet);
 }

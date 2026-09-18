@@ -1,7 +1,9 @@
 // Shared by the canvas, standalone HTML and the result of an XSLT transform.
-export const documentCss = (root = '.dte-page-wrap') => `
+import { pageSize } from './pageSize';
+export const documentCss = (root = '.dte-page-wrap', size?: unknown) => `
+@page { size:8.5in ${pageSize(size).height}in; margin:0; }
 ${root}, ${root} * { box-sizing:border-box; }
-${root} { width:8.5in; min-height:11in; margin:0 auto; padding:0.25in; position:relative;
+${root} { width:8.5in; min-height:${pageSize(size).height}in; margin:0 auto; padding:0.25in; position:relative;
   background:white; font-family:Arial,sans-serif; font-size:7pt; text-align:left;
   line-height:1.5; letter-spacing:-.015em; font-synthesis:none; }
 ${root} * { margin:0; padding:0; border:0 solid; }
