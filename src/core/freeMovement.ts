@@ -1,5 +1,5 @@
 export function movementTarget(target, mode = 'elements') {
-  if (target.closest?.('[contenteditable="true"], [data-resize], .col-resize-handle')) return null;
+  if (target.closest?.('[contenteditable="true"], [data-resize], [data-rg-remove], .col-resize-handle')) return null;
   // A table column and all of its detail cells are one structure. In free
   // movement the table moves as a unit; column changes belong to reorder mode.
   const itemsTable = target.closest?.('.items-table');

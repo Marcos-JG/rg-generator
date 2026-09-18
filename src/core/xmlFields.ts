@@ -8,7 +8,7 @@ let draggedXPath: string | null = null;
 export const beginXmlFieldDrag = (xpath: string) => { draggedXPath = xpath; };
 export const endXmlFieldDrag = () => { draggedXPath = null; };
 export const activeXmlFieldDrag = () => draggedXPath;
-export interface XmlDatum { xpath: string; label: string; path: string; value: string }
+export interface XmlDatum { xpath: string; label: string; path: string; value: string; kind?: 'logo' }
 const literal = (value: string) => !value.includes("'") ? `'${value}'` :
   !value.includes('"') ? `"${value}"` : `concat(${value.split("'").map(part => `'${part}'`).join(`,"'",`)})`;
 const nameTest = (node: Element | Attr) => `local-name()=${literal(node.localName)} and ${node.namespaceURI ? `namespace-uri()=${literal(node.namespaceURI)}` : 'not(namespace-uri())'}`;
@@ -41,17 +41,36 @@ export function xmlValue(doc: Document, xpath: string): string {
   return doc.evaluate(xpath, doc, null, 2, null).stringValue;
 }
 
+export function xmlPaletteFields(source: string): XmlDatum[] {
+  const fields = xmlDataFields(source);
+  const taxId = fields.find(field => /\/Seller\/TaxID$/.test(field.path));
+  if (!taxId) return fields;
+  return [{ kind: 'logo', label: 'Logo del emisor', path: 'Logo del emisor',
+    xpath: `concat('https://digifact-logo.s3.amazonaws.com/SV/logo/',${taxId.xpath},'.jpg')`,
+    value: `https://digifact-logo.s3.amazonaws.com/SV/logo/${taxId.value}.jpg` }, ...fields];
+}
+
 export function xmlFieldElement(doc: Document, field: XmlField, editor: EditorState, preview: boolean): Element {
   const node = doc.createElement('div');
   const style = document.createElement('div').style;
   style.cssText = `position:absolute;left:${field.x}px;top:${field.y}px;width:220px;min-height:20px;z-index:10;font:12px Arial,sans-serif;color:#111;white-space:pre-wrap;overflow-wrap:anywhere;`;
+  if (field.kind === 'logo') { style.width = '160px'; style.height = '100px'; }
   for (const [key, value] of Object.entries(editor.overrides?.[field.id] || {})) {
     if ((typeof value === 'string' || typeof value === 'number') && key in style) style.setProperty(key.replace(/[A-Z]/g, char => '-' + char.toLowerCase()), String(value));
   }
   const position = editor.positions?.[field.id];
   if (position) style.transform = `translate(${position.x}px,${position.y}px)`;
   node.setAttribute('style', style.cssText);
-  if (preview) node.setAttribute('data-rg-id', field.id);
+  if (preview) {
+    node.setAttribute('data-rg-id', field.id);
+    const remove = doc.createElement('button');
+    remove.setAttribute('type', 'button'); remove.setAttribute('data-rg-remove', field.id);
+    remove.setAttribute('aria-label', `Eliminar ${field.label}`);
+    remove.setAttribute('title', `Eliminar ${field.label}`);
+    remove.setAttribute('style', 'position:absolute;top:-10px;right:-10px;width:20px;height:20px;border:1px solid #fecaca;border-radius:50%;background:white;color:#dc2626;font:16px Arial;line-height:18px;cursor:pointer;z-index:100;padding:0;');
+    remove.textContent = '×'; node.appendChild(remove);
+  }
+  if (field.kind === 'logo') return node;
   const label = doc.createElement('span');
   label.textContent = editor.textOverrides?.[`${field.id}:text:0`] ?? `${field.label}: `;
   if (preview) label.setAttribute('data-rg-text', `${field.id}:text:0`);
@@ -64,6 +83,12 @@ export function appendXmlFieldsHtml(html: string, fields: XmlField[], resolve: (
   const doc = new DOMParser().parseFromString(html, 'text/html');
   for (const field of fields) {
     const node = xmlFieldElement(doc, field, editor, true);
+    if (field.kind === 'logo') {
+      const image = doc.createElement('img');
+      image.setAttribute('src', resolve(field.xpath)); image.setAttribute('alt', field.label);
+      image.setAttribute('style', 'width:100%;height:100%;object-fit:contain;');
+      image.setAttribute('draggable', 'false'); node.appendChild(image); doc.body.appendChild(node); continue;
+    }
     const value = doc.createElement('span');
     value.setAttribute('data-rg-value', 'true');
     value.textContent = resolve(field.xpath);

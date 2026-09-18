@@ -90,6 +90,13 @@ export function editImportedXsltDocument(source, { overrides = {}, positions = {
     appendCss(doc, body, 'position:relative;');
     for (const field of xmlFields) {
       const node = xmlFieldElement(doc, field, { overrides, positions, textOverrides }, preview);
+      if (field.kind === 'logo') {
+        const image = doc.createElement('img');
+        image.setAttribute('alt', field.label); image.setAttribute('style', 'width:100%;height:100%;object-fit:contain;');
+        const src = doc.createElementNS(XSL, 'xsl:attribute'); src.setAttribute('name', 'src');
+        const value = doc.createElementNS(XSL, 'xsl:value-of'); value.setAttribute('select', field.xpath);
+        src.appendChild(value); image.appendChild(src); node.appendChild(image); body.appendChild(node); continue;
+      }
       const value = doc.createElementNS(XSL, 'xsl:value-of');
       value.setAttribute('select', field.xpath);
       const span = doc.createElement('span');

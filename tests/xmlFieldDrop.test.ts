@@ -53,3 +53,11 @@ it('does not receive drops outside the page or after detaching the listener', ()
   drag(document.body, 'drop', { [XML_FIELD_MIME]: datum().xpath }); expect(added).toEqual([]);
   cleanup(); drag(root, 'drop', { [XML_FIELD_MIME]: datum().xpath }); expect(added).toEqual([]);
 });
+it('deletes the chosen field from its preview button before selection handlers run', () => {
+  const root = page(), removed = [];
+  root.innerHTML = '<div data-rg-id="xml-field-test"><button data-rg-remove="xml-field-test">×</button></div>';
+  const cleanup = attachXmlFieldDrop(root, () => xml, () => {}, id => removed.push(id)); cleanups.push(cleanup);
+  const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+  root.querySelector('button').dispatchEvent(event);
+  expect(removed).toEqual(['xml-field-test']); expect(event.defaultPrevented).toBe(true);
+});

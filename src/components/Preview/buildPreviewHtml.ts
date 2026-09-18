@@ -319,7 +319,7 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
         ${emisorHandles}
         <div class="section-content" style="${cssStr(emisorInnerSt)}">
           <div style="text-align:center;font-weight:bold;margin-bottom:4px">EMISOR</div>
-          <div class="section-seller" style="border:1px solid ${s.colorBorder};border-radius:5px;height:calc(100% - 24px);box-sizing:border-box">
+          <div class="section-seller" style="border:1px solid ${s.colorBorder};border-radius:5px;min-height:calc(100% - 24px);height:auto;box-sizing:border-box">
             <table width="100%" height="100%" cellPadding="0" cellSpacing="0" border="0">${sellerRows}</table>
           </div>
         </div>
@@ -339,7 +339,7 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
         ${receptorHandles}
         <div class="section-content" style="${cssStr(receptorInnerSt)}">
           <div style="text-align:center;font-weight:bold;margin-bottom:4px">RECEPTOR</div>
-          <div class="section-buyer" style="border:1px solid ${s.colorBorder};border-radius:5px;height:calc(100% - 24px);box-sizing:border-box">
+          <div class="section-buyer" style="border:1px solid ${s.colorBorder};border-radius:5px;min-height:calc(100% - 24px);height:auto;box-sizing:border-box">
             <table width="100%" height="100%" cellPadding="0" cellSpacing="0" border="0">${buyerRows}</table>
           </div>
         </div>

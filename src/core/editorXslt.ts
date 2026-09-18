@@ -135,6 +135,7 @@ export function generateEditorXslt(config, userStyle: Partial<import('../types/e
   function emit(node) {
     if (node.nodeType === 3) return emitText(node.textContent);
     if (node.nodeType !== 1) return '';
+    if (node.hasAttribute('data-rg-remove')) return '';
     const attributes = []; const dynamicAttributes = [];
     for (const attr of node.attributes) {
       if (attr.name.startsWith('data-') || ['draggable','contenteditable'].includes(attr.name)) continue;

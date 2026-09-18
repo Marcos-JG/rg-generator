@@ -41,6 +41,14 @@ export const useConfigStore = create<ConfigStore>()(persist((set, get) => {
       Object.keys(textOverrides).filter(key => key.startsWith(id + ':')).forEach(key => delete textOverrides[key]);
       return { xmlFields: (state.xmlFields || []).filter(field => field.id !== id), overrides, positions, textOverrides };
     }),
+    clearXmlFields: () => commit(state => {
+      const ids = new Set((state.xmlFields || []).map(field => field.id));
+      return { xmlFields: [],
+        overrides: Object.fromEntries(Object.entries(state.overrides).filter(([id]) => !ids.has(id))),
+        positions: Object.fromEntries(Object.entries(state.positions).filter(([id]) => !ids.has(id))),
+        textOverrides: Object.fromEntries(Object.entries(state.textOverrides).filter(([key]) => ![...ids].some(id => key.startsWith(id + ':')))),
+      };
+    }),
     loadDocument: (xmlString, metadata, currentConfig) => {
       useHistoryStore.getState().clear();
       set({ xmlString, metadata, currentConfig, overrides: {}, textOverrides: {}, positions: {}, xmlFields: [], docTitle: null });

@@ -10,7 +10,7 @@ export function editableHtml(html, textOverrides = {}, positions = {}, selection
   while (walker.nextNode()) nodes.push(walker.currentNode);
   const counts = new Map();
   for (const node of nodes) {
-    if (!node.textContent.trim() || node.parentElement.closest('script, style, [data-resize], .col-resize-handle, [data-rg-value], [data-rg-text]')) continue;
+    if (!node.textContent.trim() || node.parentElement.closest('script, style, [data-resize], [data-rg-remove], .col-resize-handle, [data-rg-value], [data-rg-text]')) continue;
     const owner = node.parentElement.closest('[data-rg-id]');
     if (!owner) continue;
     const id = owner.getAttribute('data-rg-id');
@@ -61,7 +61,7 @@ export function cleanPreviewHtml(previewEl) {
     target.style.flex = 'none';
   });
 
-  clone.querySelectorAll('[data-resize], .col-resize-handle, [data-alignment-guide]').forEach(el => el.remove());
+  clone.querySelectorAll('[data-resize], [data-rg-remove], .col-resize-handle, [data-alignment-guide]').forEach(el => el.remove());
   for (const el of [clone, ...clone.querySelectorAll('*')]) {
     el.classList.remove('rg-sel', 'rg-hover', 'field-draggable');
     for (const attr of [...el.attributes]) {
