@@ -306,8 +306,8 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
 
   const renderSection = (sec) => {
     if (sec === 'emisor') {
-      const emisorSt = buildBlockOuter('emisor', sectionOuterStyle());
-      const emisorInnerMerged = buildBlockContent('emisor', { height: '100%', width: '100%', boxSizing: 'border-box' });
+      const emisorSt = buildBlockOuter('emisor', sectionOuterStyle({ border: '1px solid ' + s.colorBorder, borderRadius: '5px', boxSizing: 'border-box', overflow: 'visible' }));
+      const emisorInnerMerged = buildBlockContent('emisor', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' });
       delete emisorInnerMerged.marginTop;
       delete emisorInnerMerged.marginBottom;
       delete emisorInnerMerged.separationX;
@@ -319,15 +319,15 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
         ${emisorHandles}
         <div class="section-content" style="${cssStr(emisorInnerSt)}">
           <div style="text-align:center;font-weight:bold;margin-bottom:4px">EMISOR</div>
-          <div class="section-seller" style="border:1px solid ${s.colorBorder};border-radius:5px;min-height:calc(100% - 24px);height:auto;box-sizing:border-box">
+          <div class="section-seller" style="flex:1;min-height:min-content;box-sizing:border-box">
             <table width="100%" height="100%" cellPadding="0" cellSpacing="0" border="0">${sellerRows}</table>
           </div>
         </div>
       </div>`;
     }
     if (sec === 'receptor') {
-      const receptorSt = buildBlockOuter('receptor', sectionOuterStyle());
-      const receptorInnerMerged = buildBlockContent('receptor', { height: '100%', width: '100%', boxSizing: 'border-box' });
+      const receptorSt = buildBlockOuter('receptor', sectionOuterStyle({ border: '1px solid ' + s.colorBorder, borderRadius: '5px', boxSizing: 'border-box', overflow: 'visible' }));
+      const receptorInnerMerged = buildBlockContent('receptor', { height: '100%', width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' });
       delete receptorInnerMerged.marginTop;
       delete receptorInnerMerged.marginBottom;
       delete receptorInnerMerged.separationX;
@@ -339,7 +339,7 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
         ${receptorHandles}
         <div class="section-content" style="${cssStr(receptorInnerSt)}">
           <div style="text-align:center;font-weight:bold;margin-bottom:4px">RECEPTOR</div>
-          <div class="section-buyer" style="border:1px solid ${s.colorBorder};border-radius:5px;min-height:calc(100% - 24px);height:auto;box-sizing:border-box">
+          <div class="section-buyer" style="flex:1;min-height:min-content;box-sizing:border-box">
             <table width="100%" height="100%" cellPadding="0" cellSpacing="0" border="0">${buyerRows}</table>
           </div>
         </div>

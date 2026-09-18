@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { attachXmlFieldDrop } from '../src/components/Preview/useXmlFieldDrop';
 import { beginXmlFieldDrag, endXmlFieldDrag, xmlDataFields, XML_FIELD_MIME, XML_FIELD_TEXT_PREFIX } from '../src/core/xmlFields';
 
 const xml = '<Root><Extra>OC-123</Extra></Root>';
 const datum = () => xmlDataFields(xml)[0];
 const cleanups: (() => void)[] = [];
-afterEach(() => { cleanups.splice(0).forEach(cleanup => cleanup()); endXmlFieldDrag(); document.body.innerHTML = ''; });
+afterEach(() => { cleanups.splice(0).forEach(cleanup => cleanup()); endXmlFieldDrag(); document.body.innerHTML = ''; vi.restoreAllMocks(); });
 function drag(target: Element, type: string, payload: Record<string, string> = {}) {
   const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX: 150, clientY: 200 });
   Object.defineProperty(event, 'dataTransfer', { value: { types: Object.keys(payload), getData: name => payload[name] || '', dropEffect: '' } });
@@ -54,10 +54,20 @@ it('does not receive drops outside the page or after detaching the listener', ()
   cleanup(); drag(root, 'drop', { [XML_FIELD_MIME]: datum().xpath }); expect(added).toEqual([]);
 });
 it('deletes the chosen field from its preview button before selection handlers run', () => {
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
   const root = page(), removed = [];
   root.innerHTML = '<div data-rg-id="xml-field-test"><button data-rg-remove="xml-field-test">×</button></div>';
   const cleanup = attachXmlFieldDrop(root, () => xml, () => {}, id => removed.push(id)); cleanups.push(cleanup);
   const event = new MouseEvent('click', { bubbles: true, cancelable: true });
   root.querySelector('button').dispatchEvent(event);
   expect(removed).toEqual(['xml-field-test']); expect(event.defaultPrevented).toBe(true);
+});
+it('keeps the field when deletion is cancelled', () => {
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  const root = page(), removed = [];
+  root.innerHTML = '<button data-rg-remove="xml-field-test">×</button>';
+  cleanups.push(attachXmlFieldDrop(root, () => xml, () => {}, id => removed.push(id)));
+  root.querySelector('button').click();
+  expect(confirm).toHaveBeenCalledWith('¿Estás seguro de que quieres eliminar este elemento?');
+  expect(removed).toEqual([]);
 });
