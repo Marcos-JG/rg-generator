@@ -47,14 +47,20 @@ export function alignmentGuides(rect, targets, tolerance = 3) {
   return guides;
 }
 
+export function applyMovementPosition(el: HTMLElement, position: { x: number; y: number; z?: number }) {
+  el.style.transform = `translate(${position.x}px, ${position.y}px)`;
+  // Added XML fields already have left/top coordinates outside document flow.
+  // Changing them to relative puts their origin at the end of the document.
+  if (!['absolute', 'fixed'].includes(el.style.position)) el.style.position = 'relative';
+  el.style.zIndex = String(position.z || 1);
+}
+
 export function applyPositions(doc, positions = {}) {
   for (const el of doc.querySelectorAll('[data-rg-id]')) {
     if (el.dataset.rgId === 'footer') continue;
     const position = positions[el.dataset.rgId];
     if (!position) continue;
-    el.style.transform = `translate(${position.x}px, ${position.y}px)`;
-    el.style.position = 'relative';
-    el.style.zIndex = String(position.z || 1);
+    applyMovementPosition(el, position);
     // A moved field may cross its original table or section boundary.
     let parent = el.parentElement;
     while (parent && parent !== doc.body) {

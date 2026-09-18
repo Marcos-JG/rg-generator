@@ -7,7 +7,7 @@ import { parseImportedXslt } from '../../core/importedXslt';
 import { readXmlSource, normalizeXmlSource } from '../../core/xmlSource';
 
 export default function XmlUploader() {
-  const { loadDocument, customXslt, customXsltName, customXsltFiles, addCustomXsltFiles, setCustomXslt } = useConfigStore();
+  const { loadDocument, xmlString, customXslt, customXsltName, customXsltFiles, addCustomXsltFiles, setCustomXslt } = useConfigStore();
   const [mode, setMode] = useState('xml');
 
   const handleXmlLoaded = (content, fileName) => {
@@ -105,12 +105,18 @@ export default function XmlUploader() {
                 </button>
               </div>
 
-              <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 leading-relaxed">
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold">XML de ejemplo</h3>
+                <p className="text-xs text-gray-500">{xmlString ? 'XML cargado. Puedes reemplazarlo para probar otros datos.' : 'Falta cargar el XML para mostrar esta plantilla.'}</p>
+                <Dropzone onFileLoaded={handleXmlLoaded} className="!p-3" />
+              </div>
+              <details className="p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 leading-relaxed">
+                <summary className="cursor-pointer">Cómo editar esta plantilla</summary>
                 <p className="font-medium mb-1">XSLT externo activo</p>
                 <p>Selecciona elementos en la preview para moverlos y cambiar su tamaño, fuente o color. Edita las etiquetas con doble clic.</p>
                 <p className="mt-1">Las llamadas a los datos, condiciones e includes se conservan. Los cambios en una plantilla repetida se aplican a todas sus filas.</p>
                 <p className="mt-1">Los dos Shared de Digifact se cargan automáticamente. Los controles de contenido del generador se utilizan con sus diseños propios.</p>
-              </div>
+              </details>
               <label className="block text-xs text-gray-700">Archivos incluidos (.xsl / .xslt)
                 <input className="block w-full mt-2" type="file" multiple accept=".xsl,.xslt" onChange={handleIncludes} />
               </label>

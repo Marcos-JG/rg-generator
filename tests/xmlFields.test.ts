@@ -7,6 +7,8 @@ import { execFileSync } from 'node:child_process';
 import { xmlDataFields, appendXmlFieldsHtml } from '../src/core/xmlFields';
 import { editImportedXslt } from '../src/core/importedXslt';
 import { generateEditorXslt } from '../src/core/editorXslt';
+import { applyMovementPosition } from '../src/core/freeMovement';
+import { editableHtml } from '../src/core/editableHtml';
 import { useConfigStore } from '../src/stores/configStore';
 import ccf from '../src/configs/sv/ccf.json';
 
@@ -14,6 +16,21 @@ const xml = `<Root xmlns="urn:test"><Extra><Info Name="Order" Value="OC-01"/><In
 const datum = () => xmlDataFields(xml).find(field => field.label === 'Salesperson');
 const field = () => ({ id: 'xml-field-test', xpath: datum().xpath, label: 'Vendedor', x: 120, y: 350 });
 const source = `<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:output method="html"/><xsl:template match="/"><html><body><p>Original</p></body></html></xsl:template></xsl:stylesheet>`;
+
+it('keeps an added field out of document flow during its first and subsequent moves and after saving', () => {
+  const html = appendXmlFieldsHtml('<p>Existing document content</p>', [field()], () => 'Ana', {});
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const node = doc.querySelector<HTMLElement>('[data-rg-id]');
+  for (const position of [{ x: 15, y: 20 }, { x: 25, y: 30 }]) {
+    applyMovementPosition(node, position);
+    expect(node.style.position).toBe('absolute');
+    expect(node.style.left).toBe('120px'); expect(node.style.top).toBe('350px');
+    const saved = new DOMParser().parseFromString(editableHtml(html, {}, { [field().id]: position }), 'text/html');
+    const restored = saved.querySelector<HTMLElement>('[data-rg-id]');
+    expect(restored.style.position).toBe('absolute');
+    expect(restored.style.transform).toBe(`translate(${position.x}px, ${position.y}px)`);
+  }
+});
 
 it('lists attributes and separate repeated elements without confusing their values', () => {
   const fields = xmlDataFields(xml);
@@ -59,6 +76,7 @@ it.skipIf(process.platform !== 'win32')('transforms imported and generated XSLT 
       const node = [...output.querySelectorAll('div')].find(node => node.style.left === '120px');
       expect(node.style.transform.replace(/\s/g, '')).toBe('translate(20px,15px)');
       expect(node.style.color).toBe('red');
+      expect(node.style.position).toBe('absolute');
       expect(output.querySelector('[data-rg-id], [data-rg-text]')).toBeNull();
     }
   } finally { rmSync(folder, { recursive: true, force: true }); }
