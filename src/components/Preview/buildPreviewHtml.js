@@ -243,7 +243,7 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
   const infoBlock = (id, title, body) => !body ? '' : `<div data-rg-id="${id}" data-drag-section="${id}" class="${cls('section', id)}" draggable="true"
     style="${cssStr(buildBlockOuter(id, sectionOuterStyle({ marginBottom: '10px' })))}">
     ${sectionHandles()}
-    <div class="section-content" style="${cssStr(buildBlockContent(id, { border: `1px solid ${s.colorBorder}`, borderRadius: '5px', padding: '5px', boxSizing: 'border-box' }))}">
+    <div class="section-content" style="${cssStr(buildBlockContent(id, { border: `1px solid ${s.colorBorder}`, borderRadius: '5px', padding: '5px', boxSizing: 'border-box', height: '100%', width: '100%' }))}">
       ${title ? `<div style="text-align:center;font-weight:bold;margin-bottom:4px">${title}</div>` : ''}${body}
     </div>
   </div>`;
