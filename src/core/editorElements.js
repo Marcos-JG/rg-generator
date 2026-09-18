@@ -10,6 +10,7 @@ export const BLOCK_LABELS = {
   'header-ids': 'Identificación del documento',
   'header-qr': 'Código QR',
   'header-info': 'Información del documento',
+  'header-version': 'Versión del documento',
   'documentos-relacionados': 'Documentos relacionados',
   'otros-documentos': 'Otros documentos asociados',
   apendice: 'Información adicional',
