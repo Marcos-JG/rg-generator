@@ -1,18 +1,16 @@
 import { useCallback } from 'react';
+import { readXmlSource } from '../../core/xmlSource';
 
 export default function Dropzone({ onFileLoaded, accept = '.xml', className = '' }) {
   const handleDrop = useCallback(
-    (e) => {
+    async (e) => {
       e.preventDefault();
       e.stopPropagation();
       const file = e.dataTransfer?.files?.[0] || e.target?.files?.[0];
       if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        onFileLoaded(event.target.result, file.name);
-      };
-      reader.readAsText(file);
+      try { onFileLoaded(await readXmlSource(file), file.name); }
+      catch (error) { alert('No se pudo leer el archivo: ' + error.message); }
     },
     [onFileLoaded]
   );

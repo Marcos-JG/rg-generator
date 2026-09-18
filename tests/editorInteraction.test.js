@@ -76,6 +76,31 @@ describe('direct editing interactions', () => {
     await act(() => useConfigStore.getState().undo());
     expect(host.querySelector('[data-rg-id="header-title"]').style.transform).toBe('');
   });
+  it('shows guides at zoom while dragging and removes them on release or Escape', async () => {
+    const { page, el } = geometry();
+    Object.defineProperty(page, 'offsetWidth', { configurable: true, value: 816 });
+    page.getBoundingClientRect = () => ({ left: 20, top: 30, right: 428, bottom: 558, width: 408 });
+    const target = host.querySelector('[data-rg-id="items"]');
+    target.getBoundingClientRect = () => ({ left: 120, right: 320, top: 300, bottom: 400, width: 200, height: 100 });
+    await act(() => pointer(el, 'pointerdown', 120, 120));
+    await act(() => pointer(window, 'pointermove', 140, 120));
+    const layer = page.querySelector('[data-alignment-guide]');
+    expect(layer).not.toBeNull();
+    expect(layer.style.pointerEvents).toBe('none');
+    expect(layer.firstElementChild.style.left).toBe('200px');
+    expect(layer.firstElementChild.style.width).toBe('2px');
+    await act(() => pointer(window, 'pointermove', 145, 130));
+    expect(page.querySelector('[data-alignment-guide]')).toBeNull();
+    await act(() => pointer(window, 'pointermove', 140, 120));
+    expect(page.querySelector('[data-alignment-guide]')).not.toBeNull();
+    await act(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    expect(page.querySelector('[data-alignment-guide]')).toBeNull();
+    await act(() => pointer(el, 'pointerdown', 120, 120));
+    await act(() => pointer(window, 'pointermove', 140, 120));
+    await act(() => pointer(window, 'pointerup', 140, 120));
+    expect(page.querySelector('[data-alignment-guide]')).toBeNull();
+    expect(useConfigStore.getState().positions['header-title']).toMatchObject({ x: 40, y: 0 });
+  });
   it('moves the complete items table when dragging one detail cell', async () => {
     const page = host.querySelector('[data-preview-content]');
     const items = host.querySelector('[data-rg-id="items"]');

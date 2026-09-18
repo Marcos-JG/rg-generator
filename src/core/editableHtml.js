@@ -60,7 +60,7 @@ export function cleanPreviewHtml(previewEl) {
     target.style.flex = 'none';
   });
 
-  clone.querySelectorAll('[data-resize], .col-resize-handle').forEach(el => el.remove());
+  clone.querySelectorAll('[data-resize], .col-resize-handle, [data-alignment-guide]').forEach(el => el.remove());
   for (const el of [clone, ...clone.querySelectorAll('*')]) {
     el.classList.remove('rg-sel', 'rg-hover', 'field-draggable');
     for (const attr of [...el.attributes]) {

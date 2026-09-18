@@ -1,14 +1,36 @@
 import { useEffect } from 'react';
 import { useConfigStore } from '../../stores/configStore';
-import { movementTarget, movementDelta } from '../../core/freeMovement';
+import { movementTarget, movementDelta, alignmentGuides } from '../../core/freeMovement';
 
-export default function useFreeMove(containerRef, active, mode, setSelected) {
+export default function useFreeMove(containerRef, active, mode, setSelected, documentKey) {
   useEffect(() => {
     const page = containerRef.current;
     if (!page || !active || mode === 'reorder') return;
+    const eventWindow = page.ownerDocument.defaultView || window;
     let drag = null;
     let suppressClick = false;
+    let guideLayer = null;
+    const clearGuides = () => { guideLayer?.remove(); guideLayer = null; };
+    const showGuides = guides => {
+      clearGuides();
+      if (!guides.length) return;
+      guideLayer = page.ownerDocument.createElement('div');
+      guideLayer.setAttribute('data-alignment-guide', 'true');
+      guideLayer.setAttribute('aria-hidden', 'true');
+      guideLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:2147483647;';
+      for (const guide of guides) {
+        const line = page.ownerDocument.createElement('div');
+        const vertical = guide.axis === 'x';
+        const position = (guide.position - (vertical ? drag.page.left : drag.page.top)) / drag.scale;
+        const start = (guide.start - (vertical ? drag.page.top : drag.page.left)) / drag.scale;
+        const length = (guide.end - guide.start) / drag.scale;
+        line.style.cssText = `position:absolute;pointer-events:none;background:#ff2d87;left:${vertical ? position : start}px;top:${vertical ? start : position}px;width:${vertical ? 1 / drag.scale : length}px;height:${vertical ? length : 1 / drag.scale}px;`;
+        guideLayer.appendChild(line);
+      }
+      page.appendChild(guideLayer);
+    };
     const finish = (cancel = false) => {
+      clearGuides();
       if (!drag) return;
       const current = drag;
       drag = null;
@@ -40,7 +62,12 @@ export default function useFreeMove(containerRef, active, mode, setSelected) {
       const id = el.dataset.rgId;
       const start = positions[id] || { x: 0, y: 0 };
       const bounds = page.getBoundingClientRect();
+      const targets = [...new Set([...page.querySelectorAll('[data-rg-id]')]
+        .map(node => movementTarget(node, mode)))].filter(node => node &&
+          node !== el && !el.contains(node) && !node.contains(el))
+        .map(node => node.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0);
       drag = { el, id, start, rect: el.getBoundingClientRect(), page: bounds,
+        targets,
         scale: bounds.width / (page.offsetWidth || bounds.width || 1) || 1,
         x: e.clientX, y: e.clientY, pointerId: e.pointerId, css: el.style.cssText,
         prevDraggable: el.getAttribute('draggable'),
@@ -72,6 +99,12 @@ export default function useFreeMove(containerRef, active, mode, setSelected) {
       drag.el.style.position = 'relative';
       drag.el.style.zIndex = String(drag.z);
       drag.el.style.outline = '2px solid #3b82f6';
+      const offsetX = delta.x * drag.scale;
+      const offsetY = delta.y * drag.scale;
+      showGuides(alignmentGuides({
+        left: drag.rect.left + offsetX, right: drag.rect.right + offsetX,
+        top: drag.rect.top + offsetY, bottom: drag.rect.bottom + offsetY,
+      }, drag.targets));
     };
     const up = e => { if (drag && drag.pointerId === e.pointerId) finish(); };
     const cancel = () => finish(true);
@@ -86,25 +119,25 @@ export default function useFreeMove(containerRef, active, mode, setSelected) {
     };
     const nativeDrag = e => e.preventDefault();
     page.addEventListener('pointerdown', down);
-    window.addEventListener('pointermove', move, { passive: false });
-    window.addEventListener('pointerup', up);
+    eventWindow.addEventListener('pointermove', move, { passive: false });
+    eventWindow.addEventListener('pointerup', up);
     page.addEventListener('pointercancel', cancel);
     page.addEventListener('lostpointercapture', cancel);
     page.addEventListener('click', click, true);
     page.addEventListener('dragstart', nativeDrag);
-    window.addEventListener('keydown', key, true);
-    window.addEventListener('blur', cancel);
+    eventWindow.addEventListener('keydown', key, true);
+    eventWindow.addEventListener('blur', cancel);
     return () => {
       cancel();
       page.removeEventListener('pointerdown', down);
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
+      eventWindow.removeEventListener('pointermove', move);
+      eventWindow.removeEventListener('pointerup', up);
       page.removeEventListener('pointercancel', cancel);
       page.removeEventListener('lostpointercapture', cancel);
       page.removeEventListener('click', click, true);
       page.removeEventListener('dragstart', nativeDrag);
-      window.removeEventListener('keydown', key, true);
-      window.removeEventListener('blur', cancel);
+      eventWindow.removeEventListener('keydown', key, true);
+      eventWindow.removeEventListener('blur', cancel);
     };
-  }, [containerRef, active, mode, setSelected]);
+  }, [containerRef, active, mode, setSelected, documentKey]);
 }

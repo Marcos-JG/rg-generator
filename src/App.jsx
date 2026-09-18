@@ -11,9 +11,12 @@ import FooterConfig from './components/ConfigPanel/FooterConfig';
 import AdendaConfig from './components/ConfigPanel/AdendaConfig';
 import InteractivePreview from './components/Preview/InteractivePreview';
 import DownloadButton from './components/Preview/DownloadButton';
+import ImportedPreview from './components/Preview/ImportedPreview';
+import { useConfigStore } from './stores/configStore';
 import { useEffect, useRef, useState } from 'react';
 
 export default function App() {
+  const imported = useConfigStore(state => Boolean(state.customXslt && state.xmlString));
   const [panel, setPanel] = useState('documento');
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef(null);
@@ -56,7 +59,7 @@ export default function App() {
 
         <main className="studio-workspace flex-1 min-w-0 flex flex-col overflow-hidden relative" aria-label="Área de edición">
           <div className="flex-1 min-h-0 overflow-auto">
-            <InteractivePreview />
+            {imported ? <ImportedPreview /> : <InteractivePreview />}
           </div>
           <div className="studio-export">
             <DownloadButton />

@@ -3,14 +3,20 @@ import Dropzone from '../shared/Dropzone';
 import { useConfigStore } from '../../stores/configStore';
 import { parseXmlFile } from '../../core/xmlParser';
 import { getConfig } from '../../configs';
+import { parseImportedXslt } from '../../core/importedXslt';
+import { readXmlSource, normalizeXmlSource } from '../../core/xmlSource';
 
 export default function XmlUploader() {
-  const { loadDocument, customXslt, customXsltName, setCustomXslt } = useConfigStore();
+  const { loadDocument, customXslt, customXsltName, customXsltFiles, addCustomXsltFiles, setCustomXslt } = useConfigStore();
   const [mode, setMode] = useState('xml');
 
   const handleXmlLoaded = (content, fileName) => {
     try {
       const { doc, metadata } = parseXmlFile(content);
+      if (customXslt) {
+        loadDocument(content, metadata, getConfig(metadata.country, metadata.docType) || { title: 'Documento externo', docType: 'externo' });
+        return;
+      }
 
       if (!metadata.country || !metadata.docTypeName) {
         alert('No se pudo detectar el país o tipo de documento del XML.');
@@ -30,11 +36,21 @@ export default function XmlUploader() {
   };
 
   const handleXsltLoaded = (content, fileName) => {
-    setCustomXslt(content, fileName);
+    try { const normalized = normalizeXmlSource(content); parseImportedXslt(normalized); setCustomXslt(normalized, fileName); }
+    catch (err) { alert(err.message); }
   };
 
   const handleRemoveXslt = () => {
     setCustomXslt(null, null);
+  };
+  const handleIncludes = async event => {
+    try {
+      const files = await Promise.all([...event.target.files].map(async file => {
+        const content = await readXmlSource(file); parseImportedXslt(content); return [file.name, content];
+      }));
+      addCustomXsltFiles(Object.fromEntries(files));
+    } catch (err) { alert(err.message); }
+    event.target.value = '';
   };
 
   return (
@@ -68,10 +84,10 @@ export default function XmlUploader() {
       ) : (
         <div>
           <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-            XSLT Personalizado
+            Editar XSLT externo
           </h3>
           <p className="text-xs text-gray-500 mb-2">
-            Subí tu propio archivo .xsl o .xslt para usarlo en lugar del generado automáticamente.
+            Carga tu plantilla .xsl o .xslt junto con un XML de ejemplo para editar su diseño.
           </p>
 
           {customXslt ? (
@@ -91,13 +107,18 @@ export default function XmlUploader() {
 
               <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 leading-relaxed">
                 <p className="font-medium mb-1">XSLT externo activo</p>
-                <p>El preview muestra tu XSLT tal cual. Los controles visuales (colores, layout, campos) no aplican sobre XSLT externo.</p>
-                <p className="mt-1">Para editar visualmente, quitá este XSLT y usá el generador normal.</p>
+                <p>Selecciona elementos en la preview para moverlos y cambiar su tamaño, fuente o color. Edita las etiquetas con doble clic.</p>
+                <p className="mt-1">Las llamadas a los datos, condiciones e includes se conservan. Los cambios en una plantilla repetida se aplican a todas sus filas.</p>
+                <p className="mt-1">Los dos Shared de Digifact se cargan automáticamente. Los controles de contenido del generador se utilizan con sus diseños propios.</p>
               </div>
+              <label className="block text-xs text-gray-700">Archivos incluidos (.xsl / .xslt)
+                <input className="block w-full mt-2" type="file" multiple accept=".xsl,.xslt" onChange={handleIncludes} />
+              </label>
+              {Object.keys(customXsltFiles || {}).map(name => <p key={name} className="text-xs text-gray-500 truncate">{name}</p>)}
             </div>
-          ) : (
+          ) : <div className="space-y-2">
             <Dropzone onFileLoaded={handleXsltLoaded} accept=".xsl,.xslt" />
-          )}
+          </div>}
         </div>
       )}
     </div>
