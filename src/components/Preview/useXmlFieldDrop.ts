@@ -33,7 +33,11 @@ export function attachXmlFieldDrop(page: HTMLElement, getXml: () => string, add:
     const click = (event: MouseEvent) => {
       const button = (event.target as Element).closest?.('[data-rg-remove]');
       if (!button || !page.contains(button) || !remove) return;
-      event.preventDefault(); event.stopImmediatePropagation(); remove(button.getAttribute('data-rg-remove'));
+      event.preventDefault(); event.stopImmediatePropagation();
+      // Use the parent window: the imported preview iframe blocks modal dialogs.
+      if (window.confirm('¿Estás seguro de que quieres eliminar este elemento?')) {
+        remove(button.getAttribute('data-rg-remove'));
+      }
     };
     doc.addEventListener('dragover', over, true); doc.addEventListener('drop', drop, true); doc.addEventListener('click', click, true);
     return () => { doc.removeEventListener('dragover', over, true); doc.removeEventListener('drop', drop, true); doc.removeEventListener('click', click, true); };
