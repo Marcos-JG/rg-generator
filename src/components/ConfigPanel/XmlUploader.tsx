@@ -123,7 +123,7 @@ export default function XmlUploader() {
               {Object.keys(customXsltFiles || {}).map(name => <p key={name} className="text-xs text-gray-500 truncate">{name}</p>)}
             </div>
           ) : <div className="space-y-2">
-            <Dropzone onFileLoaded={handleXsltLoaded} accept=".xsl,.xslt" />
+            <Dropzone onFileLoaded={handleXsltLoaded} accept=".xsl,.xslt" text="Arrastra tu XSLT aquí" />
           </div>}
         </div>
       )}
