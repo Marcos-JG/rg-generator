@@ -15,6 +15,8 @@ export default function useFreeMove(containerRef, active, mode, setSelected) {
       page.removeAttribute('data-free-moving');
       page.style.userSelect = current.userSelect;
       current.el.style.cssText = current.css;
+      if (current.prevDraggable == null) current.el.removeAttribute('draggable');
+      else current.el.setAttribute('draggable', current.prevDraggable);
       current.parents.forEach(([el, overflow]) => { el.style.overflow = overflow; });
       if (page.hasPointerCapture?.(current.pointerId)) page.releasePointerCapture(current.pointerId);
       if (current.moved) {
@@ -31,6 +33,9 @@ export default function useFreeMove(containerRef, active, mode, setSelected) {
       suppressClick = false;
       const el = movementTarget(e.target, mode);
       if (!el || !page.contains(el) || el.dataset.rgId === 'footer') return;
+      // Free movement uses pointer events; disable the native HTML5 drag so the
+      // browser can't steal the pointer and snap the element back on release.
+      el.setAttribute('draggable', 'false');
       const positions = useConfigStore.getState().positions;
       const id = el.dataset.rgId;
       const start = positions[id] || { x: 0, y: 0 };
@@ -38,6 +43,7 @@ export default function useFreeMove(containerRef, active, mode, setSelected) {
       drag = { el, id, start, rect: el.getBoundingClientRect(), page: bounds,
         scale: bounds.width / (page.offsetWidth || bounds.width || 1) || 1,
         x: e.clientX, y: e.clientY, pointerId: e.pointerId, css: el.style.cssText,
+        prevDraggable: el.getAttribute('draggable'),
         parents: [], userSelect: page.style.userSelect, moved: false,
         z: Math.max(0, ...Object.values(positions).map(p => p.z || 0)) + 1 };
       page.setAttribute('data-free-moving', 'true');

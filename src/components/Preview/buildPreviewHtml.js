@@ -578,12 +578,13 @@ export function buildPreviewHtml({ currentConfig, userStyle, xmlData, overrides,
     return `<div data-rg-id="header-row-${rowIdx}" style="display:grid;grid-template-columns:repeat(${row.length},minmax(0,1fr));gap:8px;margin-top:10px;align-items:end;overflow:visible">${cellsHtml}</div>`;
   }).join('');
 
-  const headerTitleSt = buildWithOverrides('header-title', { textAlign: 'center', fontWeight: '700', fontSize: '14pt', color: s.colorPrimary });
+  const headerTitleSt = buildWithOverrides('header-title', { textAlign: 'center', fontWeight: '700', fontSize: '14pt', color: s.colorPrimary, position: 'relative', minHeight: '40px' });
   const headerVersionSt = buildWithOverrides('header-version', { display: 'flex', justifyContent: 'flex-end', fontWeight: '700', whiteSpace: 'nowrap' });
 
   return `<div style="font-family:${s.fontFamily};font-size:${s.fontSize};color:${s.colorFont};min-height:10.5in;display:flex;flex-direction:column">
     <div class="header" style="margin-bottom:15px">
-      <div data-rg-id="header-title" class="${cls('doc-type', 'doc-type')}" style="${cssStr(headerTitleSt)}">
+      <div data-rg-id="header-title" data-drag-section="header-title" class="${cls('doc-type', 'doc-type')}" style="${cssStr(headerTitleSt)}">
+        ${sectionHandles()}
         DOCUMENTO TRIBUTARIO ELECTRÓNICO<br/>${docTitle || currentConfig.title}
       </div>
       <div data-rg-id="header-version" style="${cssStr(headerVersionSt)}">Ver. ${xmlData?.header?.Version || '1.0'}</div>
