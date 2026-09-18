@@ -52,7 +52,7 @@ export function applyMovementPosition(el: HTMLElement, position: { x: number; y:
   // Added XML fields already have left/top coordinates outside document flow.
   // Changing them to relative puts their origin at the end of the document.
   if (!['absolute', 'fixed'].includes(el.style.position)) el.style.position = 'relative';
-  el.style.zIndex = String(position.z || 1);
+  el.style.zIndex = String(Math.min(position.z || 1, 40));
 }
 
 export function applyPositions(doc, positions = {}) {

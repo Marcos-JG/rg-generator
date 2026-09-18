@@ -4,7 +4,7 @@ export default function StylePanel({ selected, overrides, updateStyle, onClose, 
   const ov = overrides[selected] || {};
   const hasOverrides = Object.keys(ov).length > 0;
   return (
-    <aside className="studio-selection-panel fixed z-50 w-72 flex flex-col" aria-label="Formato del elemento">
+    <aside className="studio-selection-panel fixed z-[80] w-72 flex flex-col" aria-label="Formato del elemento">
       <div className="flex items-center justify-between p-3 border-b bg-gray-50">
         <span className="text-xs font-bold text-blue-600 truncate">{elementLabel(selected)}</span>
         <button onClick={onClose} aria-label="Cerrar formato" className="text-gray-400 hover:text-red-500 text-sm cursor-pointer">✕</button>
