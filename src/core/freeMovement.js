@@ -22,6 +22,31 @@ export function movementDelta(rect, page, dx, dy, scale = 1) {
   };
 }
 
+// Compare rendered edges and centers in viewport pixels, including at zoom.
+export function alignmentGuides(rect, targets, tolerance = 3) {
+  const guides = [];
+  for (const axis of ['x', 'y']) {
+    const [start, end, crossStart, crossEnd] = axis === 'x'
+      ? ['left', 'right', 'top', 'bottom'] : ['top', 'bottom', 'left', 'right'];
+    const anchors = box => [box[start], (box[start] + box[end]) / 2, box[end]];
+    let best = null;
+    for (const target of targets) {
+      for (const position of anchors(target)) {
+        for (const anchor of anchors(rect)) {
+          const distance = Math.abs(position - anchor);
+          if (distance <= tolerance && (!best || distance < best.distance)) {
+            best = { axis, position, distance,
+              start: Math.min(rect[crossStart], target[crossStart]),
+              end: Math.max(rect[crossEnd], target[crossEnd]) };
+          }
+        }
+      }
+    }
+    if (best) guides.push(best);
+  }
+  return guides;
+}
+
 export function applyPositions(doc, positions = {}) {
   for (const el of doc.querySelectorAll('[data-rg-id]')) {
     if (el.dataset.rgId === 'footer') continue;

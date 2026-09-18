@@ -31,7 +31,7 @@ export const useConfigStore = create(persist((set, get) => {
   };
   return {
     xmlString: null, metadata: null, currentConfig: null,
-    customXslt: null, customXsltName: null, docTitle: null,
+    customXslt: null, customXsltName: null, customXsltFiles: {}, docTitle: null,
     userStyle: defaultStyle(), overrides: {}, textOverrides: {}, positions: {},
     loadDocument: (xmlString, metadata, currentConfig) => {
       useHistoryStore.getState().clear();
@@ -40,7 +40,11 @@ export const useConfigStore = create(persist((set, get) => {
     setXmlString: (xmlString) => set({ xmlString }),
     setMetadata: (metadata) => set({ metadata }),
     setCurrentConfig: (currentConfig) => commit({ currentConfig }),
-    setCustomXslt: (customXslt, customXsltName) => set({ customXslt, customXsltName }),
+    setCustomXslt: (customXslt, customXsltName) => {
+      useHistoryStore.getState().clear();
+      set({ customXslt, customXsltName, customXsltFiles: {}, overrides: {}, positions: {}, textOverrides: {} });
+    },
+    addCustomXsltFiles: files => set(state => ({ customXsltFiles: { ...state.customXsltFiles, ...files } })),
     setDocTitle: (docTitle) => commit({ docTitle }),
     setOverrides: (updates) => commit((state) => ({
       overrides: typeof updates === 'function' ? updates(state.overrides) : updates,
@@ -54,7 +58,7 @@ export const useConfigStore = create(persist((set, get) => {
     resetAll: () => {
       useHistoryStore.getState().clear();
       set({ xmlString: null, metadata: null, currentConfig: null, customXslt: null,
-        customXsltName: null, docTitle: null, userStyle: defaultStyle(), overrides: {}, textOverrides: {}, positions: {} });
+        customXsltName: null, customXsltFiles: {}, docTitle: null, userStyle: defaultStyle(), overrides: {}, textOverrides: {}, positions: {} });
     },
   };
 }, {
@@ -80,5 +84,5 @@ export const useConfigStore = create(persist((set, get) => {
     return next;
   },
   partialize: (state) => ({ ...designState(state), xmlString: state.xmlString,
-    metadata: state.metadata, customXslt: state.customXslt, customXsltName: state.customXsltName }),
+    metadata: state.metadata, customXslt: state.customXslt, customXsltName: state.customXsltName, customXsltFiles: state.customXsltFiles }),
 }));

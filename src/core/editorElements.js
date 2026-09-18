@@ -67,6 +67,7 @@ export function normalizeSavedDesign(state = {}) {
 }
 
 export function elementLabel(id = '') {
+  if (/^import-\d+$/.test(id)) return `Elemento importado ${Number(id.slice(7)) + 1}`;
   if (BLOCK_LABELS[id]) return BLOCK_LABELS[id];
   const prefixes = [
     ['seller-', 'Emisor · '], ['buyer-', 'Receptor · '],

@@ -6,13 +6,16 @@ import { cleanPreviewHtml } from '../../core/editableHtml';
 import baseTemplate from '../../../public/templates/base.xsl?raw';
 import { documentCss } from '../../core/documentCss';
 import { isReferenceDocument } from '../../core/referenceXslt';
+import { editImportedXslt } from '../../core/importedXslt';
+import { importedSnapshot } from './ImportedPreview';
+import { normalizeXmlSource } from '../../core/xmlSource';
 
 const BASE_TEMPLATE = baseTemplate;
 
 const DOCUMENT_RENDER_CSS = documentCss();
 
 export default function DownloadButton() {
-  const { xmlString, currentConfig, userStyle, metadata, customXslt, customXsltName, docTitle, overrides, positions, textOverrides } = useConfigStore();
+  const { xmlString, currentConfig, userStyle, metadata, customXslt, customXsltName, customXsltFiles, docTitle, overrides, positions, textOverrides } = useConfigStore();
 
   const handleDownloadXsl = () => {
     if (!currentConfig) return;
@@ -21,7 +24,7 @@ export default function DownloadButton() {
     let fileName;
 
     if (customXslt) {
-      xslt = customXslt;
+      xslt = editImportedXslt(customXslt, { overrides, positions, textOverrides });
       fileName = customXsltName || 'custom.xsl';
     } else {
       let xmlData = null;
@@ -49,9 +52,10 @@ export default function DownloadButton() {
 
   const handleDownloadHtml = () => {
     const previewEl = document.querySelector('[data-preview-content]');
-    if (!previewEl) return;
+    const importedHtml = customXslt ? importedSnapshot() : null;
+    if (!previewEl && !importedHtml) return;
 
-    const fullHtml = `<!DOCTYPE html>
+    const fullHtml = importedHtml || `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -77,7 +81,8 @@ export default function DownloadButton() {
 
   const handleDownloadPdf = () => {
     const previewEl = document.querySelector('[data-preview-content]');
-    if (!previewEl) return;
+    const importedHtml = customXslt ? importedSnapshot() : null;
+    if (!previewEl && !importedHtml) return;
 
     const printCss = `
       @media print {
@@ -87,7 +92,7 @@ export default function DownloadButton() {
       }
     `;
 
-    const fullHtml = `<!DOCTYPE html>
+    const fullHtml = importedHtml || `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -130,10 +135,15 @@ export default function DownloadButton() {
     {!customXslt && <p className="export-note mt-2 text-xs text-gray-500">{isReferenceDocument(currentConfig || {})
       ? 'El XSL usa el diseño actual del editor y los dos archivos compartidos. Guarda los tres en la misma carpeta.'
       : 'El XSL usa la configuración actual del documento. El HTML y PDF conservan además una captura exacta de la preview.'}</p>}
-    {!customXslt && isReferenceDocument(currentConfig || {}) && <div className="export-shared mt-2 flex gap-4 text-xs text-blue-700">
+    {(customXslt || isReferenceDocument(currentConfig || {})) && <div className="export-shared mt-2 flex gap-4 text-xs text-blue-700">
       <a href={`${import.meta.env.BASE_URL}templates/RG-SharedSV_fel_2.xslt`} download="RG-SharedSV_fel_2.xslt">Descargar RG-SharedSV_fel_2.xslt</a>
       <a href={`${import.meta.env.BASE_URL}templates/Shared_ENLETRAS_fel_2.xslt`} download="Shared_ENLETRAS_fel_2.xslt">Descargar Shared_ENLETRAS_fel_2.xslt</a>
     </div>}
+    {customXslt && Object.entries(customXsltFiles || {}).map(([name, content]) => <button key={name} className="text-xs text-blue-700" onClick={() => {
+      const url = URL.createObjectURL(new Blob([normalizeXmlSource(content)], { type: 'application/xml' }));
+      const link = document.createElement('a'); link.href = url; link.download = name;
+      link.click(); URL.revokeObjectURL(url);
+    }}>Descargar {name}</button>)}
       </div>
     </details>
   );

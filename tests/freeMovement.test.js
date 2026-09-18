@@ -1,11 +1,35 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { applyPositions, movementDelta, movementTarget } from '../src/core/freeMovement';
+import { alignmentGuides, applyPositions, movementDelta, movementTarget } from '../src/core/freeMovement';
 import { editableHtml, cleanPreviewHtml } from '../src/core/editableHtml';
 import { useConfigStore } from '../src/stores/configStore';
 import { useHistoryStore } from '../src/stores/historyStore';
 
 describe('free movement', () => {
+  it('shows the nearest aligned edge or center on each axis', () => {
+    const rect = { left: 100, right: 200, top: 80, bottom: 120 };
+    const targets = [
+      { left: 102, right: 250, top: 300, bottom: 400 },
+      { left: 120, right: 180, top: 100, bottom: 200 },
+    ];
+    expect(alignmentGuides(rect, targets)).toEqual([
+      { axis: 'x', position: 150, distance: 0, start: 80, end: 200 },
+      { axis: 'y', position: 100, distance: 0, start: 100, end: 200 },
+    ]);
+  });
+  it('uses a screen-pixel tolerance and hides guides away from alignment', () => {
+    const rect = { left: 10, right: 30, top: 10, bottom: 30 };
+    const target = { left: 33, right: 73, top: 80, bottom: 120 };
+    expect(alignmentGuides(rect, [target])).toEqual([
+      { axis: 'x', position: 33, distance: 3, start: 10, end: 120 },
+    ]);
+    expect(alignmentGuides(rect, [target], 2)).toEqual([]);
+    expect(alignmentGuides(rect, [])).toEqual([]);
+  });
+  it('does not export alignment lines even during a drag', () => {
+    const doc = new DOMParser().parseFromString('<main><p>Documento</p><div data-alignment-guide="true"><div style="background:#ff2d87"></div></div></main>', 'text/html');
+    expect(cleanPreviewHtml(doc.querySelector('main'))).toBe('<p>Documento</p>');
+  });
   it('constrains movements to the page and converts scaled coordinates', () => {
     const page = { left: 20, top: 30, right: 420, bottom: 530 };
     const rect = { left: 70, top: 80, right: 170, bottom: 130 };
