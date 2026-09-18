@@ -41,6 +41,12 @@ export default function StylePanel({ selected, overrides, updateStyle, onClose, 
         <Row label="Separación Abajo">
           <PxInput value={ov.marginBottom} onChange={(v) => updateStyle('marginBottom', v)} placeholders={[0, 2, 4, 8]} />
         </Row>
+        <Row label="Separación Izquierda">
+          <PxInput value={ov.marginLeft} onChange={(v) => updateStyle('marginLeft', v)} placeholders={[0, 2, 4, 8]} />
+        </Row>
+        <Row label="Separación Derecha">
+          <PxInput value={ov.marginRight} onChange={(v) => updateStyle('marginRight', v)} placeholders={[0, 2, 4, 8]} />
+        </Row>
         <Row label="Borde (radio)">
           <PxInput value={ov.borderRadius} onChange={(v) => updateStyle('borderRadius', v)} placeholders={[0, 6, 10, 15]} />
         </Row>
@@ -48,7 +54,7 @@ export default function StylePanel({ selected, overrides, updateStyle, onClose, 
           <div className="flex gap-1">
             {['left', 'center', 'right'].map(a => (
               <button key={a} onClick={() => {
-                updateStyle({ textAlign: a, justifyContent: a === 'left' ? 'flex-start' : a === 'right' ? 'flex-end' : 'center' });
+                updateStyle({ textAlign: a, justifyContent: a === 'left' ? 'flex-start' : a === 'right' ? 'flex-end' : 'center', alignSelf: a === 'left' ? 'flex-start' : a === 'right' ? 'flex-end' : 'center' });
               }}
                 className={`px-2 py-1 rounded text-[10px] border cursor-pointer ${ov.textAlign === a ? 'bg-blue-100 border-blue-400 text-blue-700' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
                 {a === 'left' ? 'Izq' : a === 'center' ? 'Centro' : 'Der'}
